@@ -9,7 +9,7 @@ class PointerLockControls {
 		this.yawObject.position.y = 10;
 		this.yawObject.add( this.pitchObject );
 		document.addEventListener( "mousemove", this.move.bind( this ), false );
-		this.enabled = true;
+		this.enabled = false;
 	}
 
 	move( e ) {

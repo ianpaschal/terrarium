@@ -7,7 +7,6 @@ scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
 let renderer;
 let controls;
 let raycaster;
-const controlsEnabled = false;
 let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
@@ -20,15 +19,20 @@ const direction = new THREE.Vector3();
 const vertex = new THREE.Vector3();
 const color = new THREE.Color();
 const blocker = document.getElementById( "blocker" );
-const instructions = document.getElementById( "instructions" );
 const keyboardHandlers = {
 
 	// Escape
 	27: {
 		down() {
-			controls.enabled = true;
-			blocker.style.display = "visible";
-			document.exitPointerLock();
+			if ( !controls.enabled ) {
+				controls.enabled = true;
+				blocker.style.display = "none";
+				document.body.requestPointerLock();
+			} else {
+				controls.enabled = false;
+				blocker.style.display = "";
+				document.exitPointerLock();
+			}
 		},
 		up() {
 
@@ -60,7 +64,6 @@ const keyboardHandlers = {
 	68: {
 		down() {
 			moveRight = true;
-			console.log( "working" );
 		},
 		up() {
 			moveRight = false;
@@ -89,36 +92,27 @@ const keyboardHandlers = {
 };
 
 function handleKeyboard( e ) {
-	console.log( e.which, e.type );
-	if ( e.type === "keydown" ) {
-		keyboardHandlers[ e.keyCode ].down();
-	}
-	if ( e.type === "keyup" ) {
-		keyboardHandlers[ e.keyCode ].up();
+	if ( keyboardHandlers[ e.keyCode ] ) {
+		if ( e.type === "keydown" ) {
+			keyboardHandlers[ e.keyCode ].down();
+		}
+		if ( e.type === "keyup" ) {
+			keyboardHandlers[ e.keyCode ].up();
+		}
 	}
 };
 
-const element = document.body;
-
 const pointerlockchange = function() {
-	if ( document.pointerLockElement === element ) {
+	if ( document.pointerLockElement === document.body ) {
 		controls.enabled = true;
 		blocker.style.display = "none";
 	} else {
 		controls.enabled = false;
 		blocker.style.display = "block";
-		instructions.style.display = "";
 	}
 };
 
 // Hook pointer lock state change events
-document.addEventListener( "pointerlockchange", pointerlockchange, false );
-instructions.addEventListener( "click", () => {
-	instructions.style.display = "none";
-	// Ask the browser to lock the pointer
-	element.requestPointerLock = element.requestPointerLock;
-	element.requestPointerLock();
-}, false );
 
 function init() {
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
@@ -131,6 +125,7 @@ function init() {
 
 	document.addEventListener( "keydown", handleKeyboard, false );
 	document.addEventListener( "keyup", handleKeyboard, false );
+	document.addEventListener( "pointerlockchange", pointerlockchange, false );
 
 	raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
 
@@ -153,6 +148,7 @@ function onWindowResize() {
 
 function animate() {
 
+	// Move to player
 	if ( controls.enabled ) {
 		raycaster.ray.origin.copy( controls.getObject().position );
 		raycaster.ray.origin.y -= 10;
