@@ -11,7 +11,8 @@ module.exports = {
 	},
 	entry: {
 		play: "./src/play.js",
-		main: "./src/main.js"
+		main: "./src/main.js",
+		demo: "./src/demo.js"
 	},
 	module: {
 		rules: [

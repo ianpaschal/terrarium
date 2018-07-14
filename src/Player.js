@@ -12,6 +12,7 @@ class Player {
 		const material = new MeshLambertMaterial({ color:0xFFFF00 });
 		const geometry = new BoxGeometry( 1, 1, 2 );
 		const mesh = new Mesh( geometry, material );
+		mesh.position.z = 1;
 		this.model.add( mesh );
 		this.velocity = new Vector3();
 		this.acceleration = new Vector3();
