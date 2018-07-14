@@ -2,10 +2,8 @@
 import {
 	BoxBufferGeometry,
 	Color,
-	DoubleSide,
 	Float32BufferAttribute,
 	Fog,
-	HemisphereLight,
 	Mesh,
 	MeshBasicMaterial,
 	MeshPhongMaterial,
@@ -17,11 +15,13 @@ import {
 	VertexColors,
 	WebGLRenderer
 } from "three";
+import DaylightSystem from "./world/DaylightSystem";
 import PointerLockControls from "./PointerLockControls";
 let camera;
 const scene = new Scene();
 scene.background = new Color( 0xffffff );
 scene.fog = new Fog( 0xffffff, 0, 750 );
+scene.add( new DaylightSystem() );
 let renderer;
 let controls;
 let raycaster;
@@ -148,10 +148,6 @@ function init() {
 		75, window.innerWidth / window.innerHeight, 1, 1000 );
 	controls = new PointerLockControls( camera );
 	scene.add( controls.getObject() );
-
-	const light = new HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
-	light.position.set( 0.5, 1, 0.75 );
-	scene.add( light );
 
 	document.addEventListener( "keydown", handleKeyboard, false );
 	document.addEventListener( "keyup", handleKeyboard, false );
