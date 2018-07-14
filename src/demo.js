@@ -1,12 +1,7 @@
 // Single imports make it easier to swap out a three component for our own
 import {
-	BoxGeometry,
-	Color,
 	Fog,
-	Mesh,
-	MeshLambertMaterial,
 	PerspectiveCamera,
-	PlaneGeometry,
 	Raycaster,
 	Scene,
 	Vector3,
@@ -14,10 +9,11 @@ import {
 } from "three";
 import DaylightSystem from "./world/DaylightSystem";
 import PointerLockControls from "./PointerLockControls";
+import TestArea from "./world/TestArea";
+
 let camera;
 const scene = new Scene();
-scene.background = new Color( 0xffffff );
-scene.fog = new Fog( 0xffffff, 0, 750 );
+scene.fog = new Fog( 0xffffff, 0, 512 );
 scene.add( new DaylightSystem() );
 let renderer;
 let controls;
@@ -41,8 +37,6 @@ let prevTime = performance.now();
 const objects = [];
 const velocity = new Vector3();
 const direction = new Vector3();
-// const vertex = new Vector3();
-// const color = new Color();
 const blocker = document.getElementById( "blocker" );
 const keyboardHandlers = {
 
@@ -149,7 +143,7 @@ function init() {
 	document.addEventListener( "keyup", handleKeyboard, false );
 	document.addEventListener( "pointerlockchange", pointerlockchange, false );
 
-	buildWorld();
+	scene.add( new TestArea() );
 
 	renderer = new WebGLRenderer({
 		antialias: false
@@ -157,6 +151,7 @@ function init() {
 	renderer.setPixelRatio( window.devicePixelRatio );
 	// renderer.setPixelRatio( 1 );
 	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setClearColor( 0xFFFFFF );
 	document.body.appendChild( renderer.domElement );
 	//
 	window.addEventListener( "resize", onWindowResize, false );
@@ -209,36 +204,13 @@ function animate() {
 	requestAnimationFrame( animate );
 }
 
-function buildWorld() {
-	// floor
-	const floorGeometry = new PlaneGeometry( 2000, 2000, 1, 1 );
-	// floorGeometry.rotateX( - Math.PI / 2 );
-	const floorMaterial = new MeshLambertMaterial({
-		color: new Color( 0xEEEEEE )
-	});
-	const floor = new Mesh( floorGeometry, floorMaterial );
-	scene.add( floor );
-
-	// objects
-	const boxGeometry = new BoxGeometry( 20, 20, 20 );
-	const boxMaterial = new MeshLambertMaterial({
-		color: new Color( 0xFFFFFF )
-	});
-	for ( let i = 0; i < 400; i ++ ) {
-		const box = new Mesh( boxGeometry, boxMaterial );
-		box.position.x = Math.floor( Math.random() * 20 - 10 ) * 20;
-		box.position.z = Math.floor( Math.random() * 20 ) * 20 + 10;
-		box.position.y = Math.floor( Math.random() * 20 - 10 ) * 20;
-		scene.add( box );
-		objects.push( box );
-	}
-}
-
 function collisionDetection( player ) {
 
 	for ( const side in player.raycasters ) {
 		if ( player.raycasters.hasOwnProperty( side ) ) {
-			player.raycasters[ side ].ray.origin.copy( controls.getObject().position );
+			player.raycasters[ side ].ray.origin.copy(
+				controls.getObject().position
+			);
 		}
 	}
 
@@ -248,7 +220,7 @@ function collisionDetection( player ) {
 	*/
 
 	function hasCollisions( raycaster ) {
-		return raycaster.intersectObjects( objects ).length > 0;
+		return raycaster.intersectObjects( scene.children, true ).length > 0;
 	}
 
 	// If touching on the left (-X) side, force X velocity to be >= 0
