@@ -1,12 +1,41 @@
-import * as THREE from "three";
+// Single imports make it easier to swap out a three component for our own
+import {
+	BoxBufferGeometry,
+	Color,
+	DoubleSide,
+	Float32BufferAttribute,
+	Fog,
+	HemisphereLight,
+	Mesh,
+	MeshBasicMaterial,
+	MeshPhongMaterial,
+	PerspectiveCamera,
+	PlaneBufferGeometry,
+	Raycaster,
+	Scene,
+	Vector3,
+	VertexColors,
+	WebGLRenderer
+} from "three";
 import PointerLockControls from "./PointerLockControls";
 let camera;
-const scene = new THREE.Scene();
-scene.background = new THREE.Color( 0xffffff );
-scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
+const scene = new Scene();
+scene.background = new Color( 0xffffff );
+scene.fog = new Fog( 0xffffff, 0, 750 );
 let renderer;
 let controls;
 let raycaster;
+const player = {
+	position: new Vector3(),
+	raycasters: {
+		left: new Raycaster( new Vector3(), new Vector3( -1, 0, 0 ), 0, 5 ),
+		right: new Raycaster( new Vector3(), new Vector3( 1, 0, 0 ), 0, 5 ),
+		top: new Raycaster( new Vector3(), new Vector3( 0, 1, 0 ), 0, 10 ),
+		bottom: new Raycaster( new Vector3(), new Vector3( 0, -1, 0 ), 0, 10 ),
+		front: new Raycaster( new Vector3(), new Vector3( 0, 0, 1 ), 0, 2 ),
+		back: new Raycaster( new Vector3(), new Vector3( 0, 0, -1 ), 0, 2 )
+	}
+};
 let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
@@ -14,10 +43,10 @@ let moveRight = false;
 let canJump = false;
 let prevTime = performance.now();
 const objects = [];
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
-const vertex = new THREE.Vector3();
-const color = new THREE.Color();
+const velocity = new Vector3();
+const direction = new Vector3();
+const vertex = new Vector3();
+const color = new Color();
 const blocker = document.getElementById( "blocker" );
 const keyboardHandlers = {
 
@@ -115,11 +144,12 @@ const pointerlockchange = function() {
 // Hook pointer lock state change events
 
 function init() {
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+	camera = new PerspectiveCamera(
+		75, window.innerWidth / window.innerHeight, 1, 1000 );
 	controls = new PointerLockControls( camera );
 	scene.add( controls.getObject() );
 
-	const light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
+	const light = new HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
 	light.position.set( 0.5, 1, 0.75 );
 	scene.add( light );
 
@@ -127,11 +157,11 @@ function init() {
 	document.addEventListener( "keyup", handleKeyboard, false );
 	document.addEventListener( "pointerlockchange", pointerlockchange, false );
 
-	raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-
 	buildWorld();
-	//
-	renderer = new THREE.WebGLRenderer({ antialias: false });
+
+	renderer = new WebGLRenderer({
+		antialias: false
+	});
 	renderer.setPixelRatio( window.devicePixelRatio );
 	// renderer.setPixelRatio( 1 );
 	renderer.setSize( window.innerWidth, window.innerHeight );
@@ -150,32 +180,45 @@ function animate() {
 
 	// Move to player
 	if ( controls.enabled ) {
-		raycaster.ray.origin.copy( controls.getObject().position );
-		raycaster.ray.origin.y -= 10;
-		const intersections = raycaster.intersectObjects( objects );
-		const onObject = intersections.length > 0;
 		const time = performance.now();
 		const delta = ( time - prevTime ) / 1000;
+
+		// raycaster.ray.origin.copy( controls.getObject().position );
+		// raycaster.ray.origin.y -= 10;
+		// ^ puts the camera 10 units above the contact point
+
+		// const intersections = raycaster.intersectObjects( objects );
+		// const onObject = intersections.length > 0;
+
+		// Limit velocity if colliding
+
 		velocity.x -= velocity.x * 10.0 * delta;
 		velocity.z -= velocity.z * 10.0 * delta;
-		velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+		velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass <- makes no sense
+
 		direction.z = Number( moveForward ) - Number( moveBackward );
 		direction.x = Number( moveLeft ) - Number( moveRight );
 		direction.normalize(); // this ensures consistent movements in all directions
+		// Without it, we move faster diagonally by more than 40%
+
+		// Magic numbers here.
 		if ( moveForward || moveBackward ) velocity.z -= direction.z * 400 * delta;
 		if ( moveLeft || moveRight ) velocity.x -= direction.x * 400 * delta;
-		if ( onObject === true ) {
-			velocity.y = Math.max( 0, velocity.y );
-			canJump = true;
-		}
+
+		collisionDetection( player );
+
 		controls.getObject().translateX( velocity.x * delta );
 		controls.getObject().translateY( velocity.y * delta );
 		controls.getObject().translateZ( velocity.z * delta );
+		player.position.copy( controls.getObject() );
+
+		// Hard floor
 		if ( controls.getObject().position.y < 10 ) {
 			velocity.y = 0;
 			controls.getObject().position.y = 10;
 			canJump = true;
 		}
+
 		prevTime = time;
 	}
 	renderer.render( scene, camera );
@@ -184,7 +227,7 @@ function animate() {
 
 function buildWorld() {
 	// floor
-	let floorGeometry = new THREE.PlaneBufferGeometry( 2000, 2000, 100, 100 );
+	let floorGeometry = new PlaneBufferGeometry( 2000, 2000, 100, 100 );
 	floorGeometry.rotateX( - Math.PI / 2 );
 	// vertex displacement
 	let position = floorGeometry.attributes.position;
@@ -202,12 +245,14 @@ function buildWorld() {
 		color.setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
 		colors.push( color.r, color.g, color.b );
 	}
-	floorGeometry.addAttribute( "color", new THREE.Float32BufferAttribute( colors, 3 ) );
-	const floorMaterial = new THREE.MeshBasicMaterial({ vertexColors: THREE.VertexColors });
-	const floor = new THREE.Mesh( floorGeometry, floorMaterial );
+	floorGeometry.addAttribute( "color", new Float32BufferAttribute( colors, 3 ) );
+	const floorMaterial = new MeshBasicMaterial({
+		vertexColors: VertexColors
+	});
+	const floor = new Mesh( floorGeometry, floorMaterial );
 	scene.add( floor );
 	// objects
-	let boxGeometry = new THREE.BoxBufferGeometry( 20, 20, 20 );
+	let boxGeometry = new BoxBufferGeometry( 20, 20, 20 );
 	boxGeometry = boxGeometry.toNonIndexed(); // ensure each face has unique vertices
 	position = boxGeometry.attributes.position;
 	colors = [];
@@ -215,17 +260,73 @@ function buildWorld() {
 		color.setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
 		colors.push( color.r, color.g, color.b );
 	}
-	boxGeometry.addAttribute( "color", new THREE.Float32BufferAttribute( colors, 3 ) );
+	boxGeometry.addAttribute( "color", new Float32BufferAttribute( colors, 3 ) );
 	for ( var i = 0; i < 500; i ++ ) {
-		const boxMaterial = new THREE.MeshPhongMaterial({ specular: 0xffffff, flatShading: true, vertexColors: THREE.VertexColors });
+		const boxMaterial = new MeshPhongMaterial({
+			specular: 0xffffff,
+			flatShading: true,
+			vertexColors: VertexColors
+		});
 		boxMaterial.color.setHSL( Math.random() * 0.2 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-		const box = new THREE.Mesh( boxGeometry, boxMaterial );
+		const box = new Mesh( boxGeometry, boxMaterial );
 		box.position.x = Math.floor( Math.random() * 20 - 10 ) * 20;
 		box.position.y = Math.floor( Math.random() * 20 ) * 20 + 10;
 		box.position.z = Math.floor( Math.random() * 20 - 10 ) * 20;
 		scene.add( box );
 		objects.push( box );
 	}
+}
+
+function collisionDetection( player ) {
+
+	for ( const side in player.raycasters ) {
+		if ( player.raycasters.hasOwnProperty( side ) ) {
+			player.raycasters[ side ].ray.origin.copy( controls.getObject().position );
+		}
+	}
+
+	/*
+		NOTE: This part is a little bit verbose but leaves it easier to use a
+		different collision method in the future.
+	*/
+
+	function hasCollisions( raycaster ) {
+		return raycaster.intersectObjects( objects ).length > 0;
+	}
+
+	// If touching on the left (-X) side, force X velocity to be >= 0
+	if ( hasCollisions( player.raycasters.left ) ) {
+		velocity.x = Math.max( 0, velocity.x );
+	}
+
+	// If touching on the right (+X) side, force X velocity to be <= 0
+	if ( hasCollisions( player.raycasters.right ) ) {
+		velocity.x = Math.min( 0, velocity.x );
+	}
+
+	// TODO: Switch y and z
+
+	// If touching on the back (-Z) side, force Z velocity to be >= 0
+	if ( hasCollisions( player.raycasters.back ) ) {
+		velocity.z = Math.max( 0, velocity.z );
+	}
+
+	// If touching on the front (+Z) side, force Z velocity to be <= 0
+	if ( hasCollisions( player.raycasters.front ) ) {
+		velocity.z = Math.min( 0, velocity.z );
+	}
+
+	// If touching on the bottom (-Y) side, force Y velocity to be >= 0
+	if ( hasCollisions( player.raycasters.bottom ) ) {
+		velocity.y = Math.max( 0, velocity.y );
+		canJump = true;
+	}
+
+	// If touching on the top (+Y) side, force Y velocity to be <= 0
+	if ( hasCollisions( player.raycasters.top ) ) {
+		velocity.y = Math.min( 0, velocity.y );
+	}
+
 }
 
 init();
