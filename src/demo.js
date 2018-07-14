@@ -1,18 +1,15 @@
 // Single imports make it easier to swap out a three component for our own
 import {
-	BoxBufferGeometry,
+	BoxGeometry,
 	Color,
-	Float32BufferAttribute,
 	Fog,
 	Mesh,
-	MeshBasicMaterial,
-	MeshPhongMaterial,
+	MeshLambertMaterial,
 	PerspectiveCamera,
-	PlaneBufferGeometry,
+	PlaneGeometry,
 	Raycaster,
 	Scene,
 	Vector3,
-	VertexColors,
 	WebGLRenderer
 } from "three";
 import DaylightSystem from "./world/DaylightSystem";
@@ -29,10 +26,10 @@ const player = {
 	raycasters: {
 		left: new Raycaster( new Vector3(), new Vector3( -1, 0, 0 ), 0, 5 ),
 		right: new Raycaster( new Vector3(), new Vector3( 1, 0, 0 ), 0, 5 ),
-		top: new Raycaster( new Vector3(), new Vector3( 0, 1, 0 ), 0, 10 ),
-		bottom: new Raycaster( new Vector3(), new Vector3( 0, -1, 0 ), 0, 10 ),
-		front: new Raycaster( new Vector3(), new Vector3( 0, 0, 1 ), 0, 2 ),
-		back: new Raycaster( new Vector3(), new Vector3( 0, 0, -1 ), 0, 2 )
+		top: new Raycaster( new Vector3(), new Vector3( 0, 0, 1 ), 0, 2 ),
+		bottom: new Raycaster( new Vector3(), new Vector3( 0, 0, -1 ), 0, 10 ),
+		front: new Raycaster( new Vector3(), new Vector3( 0, 1, 0 ), 0, 2 ),
+		back: new Raycaster( new Vector3(), new Vector3( 0, -1, 0 ), 0, 2 )
 	}
 };
 let moveForward = false;
@@ -44,8 +41,8 @@ let prevTime = performance.now();
 const objects = [];
 const velocity = new Vector3();
 const direction = new Vector3();
-const vertex = new Vector3();
-const color = new Color();
+// const vertex = new Vector3();
+// const color = new Color();
 const blocker = document.getElementById( "blocker" );
 const keyboardHandlers = {
 
@@ -70,7 +67,7 @@ const keyboardHandlers = {
 	// Space
 	32: {
 		down() {
-			if ( canJump === true ) velocity.y += 350;
+			if ( canJump === true ) velocity.z += 350;
 			canJump = false;
 		},
 		up() {
@@ -178,18 +175,19 @@ function animate() {
 		const time = performance.now();
 		const delta = ( time - prevTime ) / 1000;
 
+		// Retarding forces
 		velocity.x -= velocity.x * 10.0 * delta;
-		velocity.z -= velocity.z * 10.0 * delta;
-		velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass <- makes no sense
+		velocity.y -= velocity.y * 10.0 * delta;
+		velocity.z -= 9.8 * 100.0 * delta; // 100.0 = mass <- makes no sense
 
-		direction.z = Number( moveForward ) - Number( moveBackward );
-		direction.x = Number( moveLeft ) - Number( moveRight );
+		direction.y = Number( moveForward ) - Number( moveBackward );
+		direction.x = Number( moveRight ) - Number( moveLeft );
 		direction.normalize(); // this ensures consistent movements in all directions
 		// Without it, we move faster diagonally by more than 40%
 
 		// Magic numbers here.
-		if ( moveForward || moveBackward ) velocity.z -= direction.z * 400 * delta;
-		if ( moveLeft || moveRight ) velocity.x -= direction.x * 400 * delta;
+		velocity.x += direction.x * 400 * delta;
+		velocity.y += direction.y * 400 * delta;
 
 		collisionDetection( player );
 
@@ -199,9 +197,9 @@ function animate() {
 		player.position.copy( controls.getObject() );
 
 		// Hard floor
-		if ( controls.getObject().position.y < 10 ) {
-			velocity.y = 0;
-			controls.getObject().position.y = 10;
+		if ( controls.getObject().position.z < 10 ) {
+			velocity.z = 0;
+			controls.getObject().position.z = 10;
 			canJump = true;
 		}
 
@@ -213,51 +211,24 @@ function animate() {
 
 function buildWorld() {
 	// floor
-	let floorGeometry = new PlaneBufferGeometry( 2000, 2000, 100, 100 );
-	floorGeometry.rotateX( - Math.PI / 2 );
-	// vertex displacement
-	let position = floorGeometry.attributes.position;
-	for ( var i = 0, l = position.count; i < l; i ++ ) {
-		vertex.fromBufferAttribute( position, i );
-		vertex.x += Math.random() * 20 - 10;
-		vertex.y += Math.random() * 2;
-		vertex.z += Math.random() * 20 - 10;
-		position.setXYZ( i, vertex.x, vertex.y, vertex.z );
-	}
-	floorGeometry = floorGeometry.toNonIndexed(); // ensure each face has unique vertices
-	position = floorGeometry.attributes.position;
-	let colors = [];
-	for ( var i = 0, l = position.count; i < l; i ++ ) {
-		color.setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-		colors.push( color.r, color.g, color.b );
-	}
-	floorGeometry.addAttribute( "color", new Float32BufferAttribute( colors, 3 ) );
-	const floorMaterial = new MeshBasicMaterial({
-		vertexColors: VertexColors
+	const floorGeometry = new PlaneGeometry( 2000, 2000, 1, 1 );
+	// floorGeometry.rotateX( - Math.PI / 2 );
+	const floorMaterial = new MeshLambertMaterial({
+		color: new Color( 0xEEEEEE )
 	});
 	const floor = new Mesh( floorGeometry, floorMaterial );
 	scene.add( floor );
+
 	// objects
-	let boxGeometry = new BoxBufferGeometry( 20, 20, 20 );
-	boxGeometry = boxGeometry.toNonIndexed(); // ensure each face has unique vertices
-	position = boxGeometry.attributes.position;
-	colors = [];
-	for ( var i = 0, l = position.count; i < l; i ++ ) {
-		color.setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-		colors.push( color.r, color.g, color.b );
-	}
-	boxGeometry.addAttribute( "color", new Float32BufferAttribute( colors, 3 ) );
-	for ( var i = 0; i < 500; i ++ ) {
-		const boxMaterial = new MeshPhongMaterial({
-			specular: 0xffffff,
-			flatShading: true,
-			vertexColors: VertexColors
-		});
-		boxMaterial.color.setHSL( Math.random() * 0.2 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+	const boxGeometry = new BoxGeometry( 20, 20, 20 );
+	const boxMaterial = new MeshLambertMaterial({
+		color: new Color( 0xFFFFFF )
+	});
+	for ( let i = 0; i < 400; i ++ ) {
 		const box = new Mesh( boxGeometry, boxMaterial );
 		box.position.x = Math.floor( Math.random() * 20 - 10 ) * 20;
-		box.position.y = Math.floor( Math.random() * 20 ) * 20 + 10;
-		box.position.z = Math.floor( Math.random() * 20 - 10 ) * 20;
+		box.position.z = Math.floor( Math.random() * 20 ) * 20 + 10;
+		box.position.y = Math.floor( Math.random() * 20 - 10 ) * 20;
 		scene.add( box );
 		objects.push( box );
 	}
@@ -294,23 +265,23 @@ function collisionDetection( player ) {
 
 	// If touching on the back (-Z) side, force Z velocity to be >= 0
 	if ( hasCollisions( player.raycasters.back ) ) {
-		velocity.z = Math.max( 0, velocity.z );
+		velocity.y = Math.max( 0, velocity.y );
 	}
 
 	// If touching on the front (+Z) side, force Z velocity to be <= 0
 	if ( hasCollisions( player.raycasters.front ) ) {
-		velocity.z = Math.min( 0, velocity.z );
+		velocity.y = Math.min( 0, velocity.y );
 	}
 
 	// If touching on the bottom (-Y) side, force Y velocity to be >= 0
 	if ( hasCollisions( player.raycasters.bottom ) ) {
-		velocity.y = Math.max( 0, velocity.y );
+		velocity.z = Math.max( 0, velocity.z );
 		canJump = true;
 	}
 
 	// If touching on the top (+Y) side, force Y velocity to be <= 0
 	if ( hasCollisions( player.raycasters.top ) ) {
-		velocity.y = Math.min( 0, velocity.y );
+		velocity.z = Math.min( 0, velocity.z );
 	}
 
 }

@@ -6,7 +6,7 @@ class PointerLockControls {
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
 		this.yawObject = new Object3D();
-		this.yawObject.position.y = 10;
+		this.yawObject.position.z = 10;
 		this.yawObject.add( this.pitchObject );
 		document.addEventListener( "mousemove", this.move.bind( this ), false );
 		this.enabled = false;
@@ -17,7 +17,7 @@ class PointerLockControls {
 		const movementX = e.movementX || 0;
 		const movementY = e.movementY || 0;
 		const PI_2 = Math.PI / 2;
-		this.yawObject.rotation.y -= movementX * 0.002;
+		this.yawObject.rotation.z -= movementX * 0.002;
 		this.pitchObject.rotation.x -= movementY * 0.002;
 		this.pitchObject.rotation.x = Math.max(
 			- PI_2,
