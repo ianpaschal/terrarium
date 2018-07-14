@@ -24,7 +24,6 @@ scene.fog = new Fog( 0xffffff, 0, 750 );
 scene.add( new DaylightSystem() );
 let renderer;
 let controls;
-let raycaster;
 const player = {
 	position: new Vector3(),
 	raycasters: {
@@ -178,15 +177,6 @@ function animate() {
 	if ( controls.enabled ) {
 		const time = performance.now();
 		const delta = ( time - prevTime ) / 1000;
-
-		// raycaster.ray.origin.copy( controls.getObject().position );
-		// raycaster.ray.origin.y -= 10;
-		// ^ puts the camera 10 units above the contact point
-
-		// const intersections = raycaster.intersectObjects( objects );
-		// const onObject = intersections.length > 0;
-
-		// Limit velocity if colliding
 
 		velocity.x -= velocity.x * 10.0 * delta;
 		velocity.z -= velocity.z * 10.0 * delta;
