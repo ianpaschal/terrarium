@@ -3,21 +3,25 @@ import {
 	Fog,
 	PerspectiveCamera,
 	Scene,
-	WebGLRenderer
+	Raycaster,
+	Vector2,
+	Vector3,
+	WebGLRenderer,
+	MeshLambertMaterial
 } from "three";
 import DaylightSystem from "./world/DaylightSystem";
-// import PointerLockControls from "./PointerLockControls";
 import TestArea from "./world/TestArea";
 import Player from "./Player";
 
 let camera;
+const mouse = new Vector2( 0, 0 );
+const raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
 const scene = new Scene();
 scene.fog = new Fog( 0xffffff, 0, 512 );
 scene.add( new DaylightSystem() );
 let renderer;
 
 // TODO: Consolidate all of this into player
-// let controls;
 let player;
 let moveForward = false;
 let moveBackward = false;
@@ -171,7 +175,7 @@ function animate() {
 
 		player.direction.y = Number( moveForward ) - Number( moveBackward );
 		player.direction.x = Number( moveRight ) - Number( moveLeft );
-		// direction.normalize(); // this ensures consistent movements in all directions
+		player.direction.normalize(); // this ensures consistent movements in all directions
 		// Without it, we move faster diagonally by more than 40%
 
 		// Magic numbers here.
@@ -183,8 +187,13 @@ function animate() {
 		model.translateX( model.velocity.x * delta );
 		model.translateY( model.velocity.y * delta );
 		model.translateZ( model.velocity.z * delta );
-		// player.position.copy( controls.getObject() );
-		// player.position.z -= 1.5;
+	}
+	raycaster.setFromCamera( mouse, camera );
+	const intersects = raycaster.intersectObjects( scene.children, true );
+	const hoverMat = new MeshLambertMaterial({ color: 0xFF00FF });
+	if ( intersects[ 0 ] ) {
+		intersects[ 0 ].object.material = hoverMat;
+		console.log( intersects[ 0 ].face.normal );
 	}
 	renderer.render( scene, camera );
 	requestAnimationFrame( animate );
@@ -233,7 +242,6 @@ function collisionDetection( player ) {
 
 	// If touching on the bottom (-Y) side, force Y velocity to be >= 0
 	if ( hasCollisions( player.raycasters.bottom ) ) {
-		console.log( "hit something at least 1.5 below" );
 		player.velocity.z = Math.max( 0, player.velocity.z );
 		canJump = true;
 	}

@@ -20,8 +20,9 @@ class Player {
 
 		this.controls = new PointerLockControls( camera );
 
-		camera.rotation.set( 0, 0, 0 );
-		camera.up.set( new Vector3( 0, 0, 1 ) );
+		camera.up.set( 0, 0, 1 );
+		camera.lookAt( new Vector3( 0, 1, 0 ) );
+
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
 		// this.model = new Object3D();
