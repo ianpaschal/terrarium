@@ -16,9 +16,9 @@ class TestArea {
 		const boxMaterial = new MeshLambertMaterial({ color: 0xFFFFFF });
 		for ( let i = 0; i < 400; i ++ ) {
 			const box = new Mesh( boxGeometry, boxMaterial );
-			box.position.x = Math.floor( Math.random() * 5 - 5 ) * 5;
-			box.position.y = Math.floor( Math.random() * 5 - 5 ) * 5;
-			box.position.z = Math.floor( Math.random() * 5 ) * 5 + 0.5;
+			box.position.x = Math.floor( Math.random() * 10 - 5 ) * 2;
+			box.position.y = Math.floor( Math.random() * 10 - 5 ) * 2;
+			box.position.z = Math.floor( Math.random() * 10 ) * 2 + 0.5;
 			this.root.add( box );
 		}
 		return this.root;
