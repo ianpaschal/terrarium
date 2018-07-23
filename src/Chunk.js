@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Geometry, Mesh, MeshLambertMaterial, Vector3 } from "three";
 class Chunk {
 
 	constructor( data ) {
@@ -28,9 +28,73 @@ class Chunk {
 	}
 
 	/**
+	 * Get the index of the vertex at the given position.
+	 * @param {Vector3} vector - Vector within the chunk
+	 */
+	getVertexIndex( vector ) {
+		return this.geometry.vertices.find( ( vertex ) => {
+			return vertex.equals( vector );
+		});
+	}
+
+	/**
 	 * Regenerate the chunk mesh (destroys existing and replaces).
 	 */
 	generateMesh() {
+
+		// For every block, check each side. if side is air, generate a face on that side
+
+		for ( let i = 0; i < this.blocks.length; i++ ) {
+
+			// If block is air, skip it
+			if ( this.blocks[ i ] === 0 ) {
+				continue;
+			}
+
+			const loc = this.getBlockLocation( i );
+
+			const neighbors = {
+				west: this.getBlockIndex( loc.x - 1, loc.y, loc.z ),
+				east: this.getBlockIndex( loc.x + 1, loc.y, loc.z ),
+				above: this.getBlockIndex( loc.x, loc.y, loc.z + 1 ),
+				below: this.getBlockIndex( loc.x, loc.y, loc.z - 1 ),
+				north: this.getBlockIndex( loc.x, loc.y + 1, loc.z ),
+				south: this.getBlockIndex( loc.x, loc.y - 1, loc.z )
+			};
+
+			for ( const key of neighbors ) {
+				if ( this.blocks[ neighbors[ key ] ] === 0 ) {
+					// Generate the cooresponding face for that key
+
+				}
+			}
+		}
+
+		this.object3D = new Mesh();
+	}
+
+	generateGeometry( i, face ) {
+
+		// for each vertex, check if it already exists. slow but better than adding
+		// every vertex preemtively and removing, or leaving, or trying to weld later
+
+		switch( face ) {
+			case "north":
+				break;
+			case "south":
+				break;
+			case "north":
+				break;
+			case "south":
+				break;
+			case "north":
+				break;
+			case "south":
+				break;
+		}
+	}
+
+	weldVertices( geometry, tolerance ) {
 
 	}
 
