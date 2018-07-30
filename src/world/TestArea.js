@@ -1,26 +1,27 @@
-import { BoxGeometry,
-	Mesh, MeshLambertMaterial, Object3D, PlaneGeometry } from "three";
+import {
+	Mesh,
+	MeshLambertMaterial,
+	Object3D,
+	PlaneGeometry,
+	Vector3
+} from "three";
+
+import Chunk from "../chunk";
+import testChunk from "../testChunk";
 
 class TestArea {
-	constructor( chunkX, chunkY ) {
+	constructor() {
 		this.root = new Object3D();
 
 		// floor
 		const floorGeometry = new PlaneGeometry( 100, 100, 1, 1 );
 		const floorMaterial = new MeshLambertMaterial({ color: 0xEEEEEE });
 		const floor = new Mesh( floorGeometry, floorMaterial );
-		this.root.add( floor );
+		const chunk = new Chunk( new Vector3( 0, 0, 0 ), testChunk );
 
-		// objects
-		const boxGeometry = new BoxGeometry( 1, 1, 1 );
-		const boxMaterial = new MeshLambertMaterial({ color: 0xFFFFFF });
-		for ( let i = 0; i < 400; i ++ ) {
-			const box = new Mesh( boxGeometry, boxMaterial );
-			box.position.x = Math.floor( Math.random() * 10 - 5 ) * 2;
-			box.position.y = Math.floor( Math.random() * 10 - 5 ) * 2;
-			box.position.z = Math.floor( Math.random() * 10 ) * 2 + 0.5;
-			this.root.add( box );
-		}
+		this.root.add( floor );
+		this.root.add( chunk.mesh );
+
 		return this.root;
 	}
 }
