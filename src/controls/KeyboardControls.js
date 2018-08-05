@@ -7,20 +7,21 @@ class KeyboardControls {
 
 		function _handle( e ) {
 			if ( this.handlers[ e.keyCode ] ) {
-				if ( e.type === "keydown" ) {
+				if ( e.type === "keydown" && this.handlers[ e.keyCode ].down ) {
 					this.handlers[ e.keyCode ].down();
 				}
-				if ( e.type === "keyup" ) {
+				if ( e.type === "keyup" && this.handlers[ e.keyCode ].up ) {
 					this.handlers[ e.keyCode ].up();
 				}
 			}
 		}
 	}
 
-	assignHandler( keycode, up, down ) {
-		this.handlers[ keycode ].up = up;
-		this.handlers[ keycode ].down = down;
+	assignHandler( keycode, down, up ) {
+		const empty = () => {};
+		this.handlers[ keycode ] = {};
+		this.handlers[ keycode ].up = up || empty;
+		this.handlers[ keycode ].down = down || empty;
 	}
-
 }
 export default KeyboardControls;

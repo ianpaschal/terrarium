@@ -1,131 +1,29 @@
 // Single imports make it easier to swap out a Three.js component for our own
-import {
-	Box3,
-	Box3Helper,
-	Fog,
-	PerspectiveCamera,
-	Scene,
-	Raycaster,
-	Vector2,
-	Vector3,
-	WebGLRenderer
-} from "three";
-import DaylightSystem from "./world/DaylightSystem";
-import TestArea from "./world/TestArea";
+import { PerspectiveCamera, Raycaster,
+	Vector2, Vector3, WebGLRenderer } from "three";
 import Player from "./Player";
+import World from "./world/World";
 
-let camera;
-let debugCamera;
+// TODO: Move to mouse controls or player...
 const mouse = new Vector2( 0, 0 );
 const raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
-const scene = new Scene();
-scene.fog = new Fog( 0xffffff, 0, 512 );
-scene.add( new DaylightSystem() );
+
+let camera;
 let renderer;
-let colliderHelper;
-// TODO: Consolidate all of this into player
 let player;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let canJump = true;
-const world = new TestArea();
+
+const world = new World();
 
 let prevTime = performance.now();
-const blocker = document.getElementById( "blocker" );
-
-const keyboardHandlers = {
-
-	// Escape
-	27: {
-		down() {
-			if ( !player.enabled ) {
-				player.enabled = true;
-				blocker.style.display = "none";
-				document.body.requestPointerLock();
-			} else {
-				player.enabled = false;
-				blocker.style.display = "";
-				document.exitPointerLock();
-			}
-		},
-		up() {
-
-		}
-	},
-
-	// Space
-	32: {
-		down() {
-			if ( canJump ) {
-				player.getModel().velocity.z += 10;
-			}
-			// canJump = false;
-		},
-		up() {
-
-		}
-	},
-
-	// A
-	65: {
-		down() {
-			moveLeft = true;
-		},
-		up() {
-			moveLeft = false;
-		}
-	},
-
-	// D
-	68: {
-		down() {
-			moveRight = true;
-		},
-		up() {
-			moveRight = false;
-		}
-	},
-
-	// S
-	83: {
-		down() {
-			moveBackward = true;
-		},
-		up() {
-			moveBackward = false;
-		}
-	},
-
-	// W
-	87: {
-		down() {
-			moveForward = true;
-		},
-		up() {
-			moveForward = false;
-		}
-	}
-};
-
-function handleKeyboard( e ) {
-	if ( keyboardHandlers[ e.keyCode ] ) {
-		if ( e.type === "keydown" ) {
-			keyboardHandlers[ e.keyCode ].down();
-		}
-		if ( e.type === "keyup" ) {
-			keyboardHandlers[ e.keyCode ].up();
-		}
-	}
-};
 
 const pointerlockchange = function() {
 	if ( document.pointerLockElement === document.body ) {
 		player.enabled = true;
+		const blocker = document.getElementById( "blocker" );
 		blocker.style.display = "none";
 	} else {
 		player.enabled = false;
+		const blocker = document.getElementById( "blocker" );
 		blocker.style.display = "block";
 	}
 };
@@ -137,20 +35,8 @@ function init() {
 	player = new Player( camera );
 	player.getModel().position.set( -8, -8, 1 );
 
-	colliderHelper = new Box3Helper( player.AABB, 0xFFFFFF );
-	scene.add( colliderHelper );
-	scene.add( player.getModel() );
-	scene.add( world );
+	world.scene.add( player.getModel() );
 
-	debugCamera = new PerspectiveCamera(
-		75, window.innerWidth / window.innerHeight, 0.01, 1000
-	);
-	debugCamera.up.set( 0, 0, 1 );
-	debugCamera.position.set( -32, -32, 32 );
-	debugCamera.lookAt( new Vector3( 0, 0, 0 ) );
-
-	document.addEventListener( "keydown", handleKeyboard, false );
-	document.addEventListener( "keyup", handleKeyboard, false );
 	document.addEventListener( "pointerlockchange", pointerlockchange, false );
 
 	renderer = new WebGLRenderer({
@@ -169,25 +55,6 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function getHorizontalMovement() {
-	const input = new Vector2();
-	if ( moveLeft ) {
-		input.x -= 1;
-	}
-	if ( moveRight ) {
-		input.x += 1;
-	}
-	if ( moveForward ) {
-		input.y += 1;
-	}
-	if ( moveBackward ) {
-		input.y -= 1;
-	}
-	input.normalize();
-	input.rotateAround( new Vector2( 0, 0 ), player.model.rotation.z );
-	return input;
-}
-
 function animate() {
 
 	// Move to player
@@ -197,21 +64,15 @@ function animate() {
 		prevTime = time;
 
 		// Compute the player input, normalize the INPUT
-		const horizontalMovement = getHorizontalMovement();
+		const horizontalMovement = player.getHorizontalMovement();
 
 		// TODO: Right now this is weird and non physicsy. Replace with proper accelerations
 
 		const model = player.getModel();
-
-		// Apply retarding forces
-		// These are applied regardless if player is touching ground
-		// model.velocity.x -= model.velocity.x * 10 * delta;
-		// model.velocity.y -= model.velocity.y * 10 * delta;
-
 		const playerSpeed = 100;
 
 		// If touching the ground, apply movement; if not, apply gravity
-		if ( canJump ) {
+		if ( player.collisions.z ) {
 			model.velocity.x -= model.velocity.x * 10 * delta;
 			model.velocity.y -= model.velocity.y * 10 * delta;
 			model.velocity.x += horizontalMovement.x * playerSpeed * delta;
@@ -224,48 +85,19 @@ function animate() {
 
 		// Get intended movement and compute collisions
 		const movement = model.velocity.clone().multiplyScalar( delta );
-		const collisions = findCollisions( movement );
-
-		console.log( collisions.x, collisions.y, collisions.z );
-
-		canJump = collisions.z;
-
-		const constrained = constrainMotion( collisions, movement );
-
-		// if ( movement.y > 0.01 ||  movement.y < -0.01 ) {
-		// 	console.log( "Original:", movement.y, "Constrained:", constrained.y );
-		// }
+		player.collisions = findCollisions( movement );
+		const constrained = constrainMotion( player.collisions, movement );
 
 		// Convert to constrained movement and apply to the player position
 		model.position.add( constrained );
-		// model.position.add( movement );
-		// begin old code
-
-		// // Retarding forces
-		// model.velocity.x -= model.velocity.x * 10.0 * delta; // Logarithmic decrease
-		// model.velocity.y -= model.velocity.y * 10.0 * delta; // Logarithmic decrease
-		// model.velocity.z -= 9.8 * delta; // 50.0 = mass <- makes no sense
-		// player.direction.y = Number( moveForward ) - Number( moveBackward );
-		// player.direction.x = Number( moveRight ) - Number( moveLeft );
-		// player.direction.normalize(); // this ensures consistent movements in all directions
-		// // Without it, we move faster diagonally by more than 40%
-		// // Magic numbers here.
-		// model.velocity.x += player.direction.x * 100 * delta;
-		// model.velocity.y += player.direction.y * 100 * delta;
-		//
-		// model.translateX( model.velocity.x * delta );
-		// model.translateY( model.velocity.y * delta );
-		// model.translateZ( model.velocity.z * delta );
-
-		// end old code
 	}
 	raycaster.setFromCamera( mouse, camera );
-	const intersects = raycaster.intersectObjects( world.children, true );
+	const intersects = raycaster.intersectObjects( world.scene.children, true );
 	// const hoverMat = new MeshLambertMaterial({ color: 0xFF00FF });
 	if ( intersects[ 0 ] ) {
 		// intersects[ 0 ].object.material = hoverMat;
 	}
-	renderer.render( scene, camera );
+	renderer.render( world.scene, camera );
 	requestAnimationFrame( animate );
 }
 
@@ -276,7 +108,7 @@ function findCollisions( distance ) {
 		new Vector3( 0.7, 0.7, 1.8 )
 	);
 
-	const raycaster = new Raycaster();
+	const collisionRaycaster = new Raycaster();
 
 	// We only check for collisions in teh direction the player is moving
 	// this means that velocity is always zero'd if any collision is detected,
@@ -325,13 +157,6 @@ function findCollisions( distance ) {
 		}
 	};
 
-	// Check for collisions
-	function check( origin, direction, extent ) {
-		const raycaster = new Raycaster( origin, direction, 0, extent );
-		const intersects = raycaster.intersectObjects( world.children, true );
-		return intersects[ 0 ] ? true : false;
-	}
-
 	const axes = [ "x", "y", "z" ];
 
 	const directions = {
@@ -364,10 +189,13 @@ function findCollisions( distance ) {
 			startingPoints.forEach( ( origin ) => {
 
 				// Set the raycaster to use the correct origin, direction, and distance
-				raycaster.set( origin, direction );
-				raycaster.far = Math.abs( distance[ axis ] );
+				collisionRaycaster.set( origin, direction );
+				collisionRaycaster.far = Math.abs( distance[ axis ] );
 
-				const intersects = raycaster.intersectObjects( world.children, true );
+				const intersects = collisionRaycaster.intersectObjects(
+					world.scene.children,
+					true
+				);
 				if ( intersects[ 0 ] ) {
 					collisions[ axis ] = true;
 				}
