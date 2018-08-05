@@ -1,5 +1,6 @@
-import { Object3D, Raycaster, Vector3 } from "three";
-import PointerLockControls from "./PointerLockControls";
+import { Box3, Box3Helper, Object3D, Raycaster, Vector3 } from "three";
+import PointerLockControls from "./controls/PointerLockControls";
+import KeyboardControls from "./controls/KeyboardControls";
 
 function clip( min, value, max ) {
 	return Math.max( min, Math.min( max, value ) );
@@ -20,8 +21,14 @@ class Player {
 
 		this.controls = new PointerLockControls( camera );
 
+		this.input = {};
+		this.input.keyboard = new KeyboardControls();
+
 		camera.up.set( 0, 0, 1 );
 		camera.lookAt( new Vector3( 0, 1, 0 ) );
+		camera.position.set( 0, 0, 0.5 );
+
+		this.AABB = new Box3();
 
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
