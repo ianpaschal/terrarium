@@ -103,7 +103,7 @@ class Chunk {
 
 			for ( const key in neighbors ) {
 				if ( neighbors.hasOwnProperty( key ) ) {
-					if ( neighbors[ key ] === 0 || neighbors[ key ] === null ) {
+					if ( neighbors[ key ] !== 1 ) {
 						this.generateFace( i, key );
 					}
 				}
