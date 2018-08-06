@@ -48,35 +48,35 @@ class Player {
 		});
 
 		// Space
-		this.keyboardControls.assignHandler( 32, () => {
+		this.keyboardControls.addHandler( 32, () => {
 			if ( this.collisions.z ) {
 				this.model.velocity.z += 10;
 			}
 		});
 
 		// A
-		this.keyboardControls.assignHandler( 65, () => {
+		this.keyboardControls.addHandler( 65, () => {
 			this.input.left = true;
 		}, () => {
 			this.input.left = false;
 		});
 
 		// D
-		this.keyboardControls.assignHandler( 68, () => {
+		this.keyboardControls.addHandler( 68, () => {
 			this.input.right = true;
 		}, () => {
 			this.input.right = false;
 		});
 
 		// S
-		this.keyboardControls.assignHandler( 83, () => {
+		this.keyboardControls.addHandler( 83, () => {
 			this.input.backward = true;
 		}, () => {
 			this.input.backward = false;
 		});
 
 		// W
-		this.keyboardControls.assignHandler( 87, () => {
+		this.keyboardControls.addHandler( 87, () => {
 			this.input.forward = true;
 		}, () => {
 			this.input.forward = false;
