@@ -1,4 +1,4 @@
-// Forge source code is distributed under the MIT license.
+// Voxeland is distributed under the MIT license.
 
 import { app, BrowserWindow } from "electron";
 import Path from "path";

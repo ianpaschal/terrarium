@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import {
 	Box3, BoxGeometry, Face3, Geometry, Mesh, MeshLambertMaterial, Object3D,
 	Vector2,

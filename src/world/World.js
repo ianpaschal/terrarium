@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import { Fog, Scene } from "three";
 import DaylightSystem from "./DaylightSystem";
 import TestArea from "./TestArea";

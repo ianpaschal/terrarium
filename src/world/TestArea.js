@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import {
 	Mesh,
 	MeshLambertMaterial,

@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import { Box3, Object3D, Vector2, Vector3 } from "three";
 import PointerLockControls from "./controls/PointerLockControls";
 import KeyboardControls from "./controls/KeyboardControls";

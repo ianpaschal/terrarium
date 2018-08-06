@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 class KeyboardControls {
 
 	constructor() {
@@ -25,6 +27,12 @@ class KeyboardControls {
 		}
 	}
 
+	/**
+	 * @description Add a pair of handler functions for a given keycode.
+	 * @param {Number} keycode - Keycode to handle
+	 * @param {Function} down - Function to run when key is pressed
+	 * @param {Function} up - Function to run when key is released
+	 */
 	addHandler( keycode, down, up ) {
 		const empty = () => {};
 		this.handlers[ keycode ] = {};
@@ -33,7 +41,7 @@ class KeyboardControls {
 	}
 
 	/**
-	 * Check if key is currently being pressed or not.
+	 * @description Check if key is currently being pressed or not.
 	 * @param {Number} keycode - Keycode to check
 	 * @returns {Boolean} - Whether or not the given key is pressed
 	 */

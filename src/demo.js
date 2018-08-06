@@ -1,4 +1,5 @@
-// Single imports make it easier to swap out a Three.js component for our own
+// Voxeland is distributed under the MIT license.
+
 import { PerspectiveCamera, Raycaster,
 	Vector2, Vector3, WebGLRenderer } from "three";
 import Player from "./Player";
