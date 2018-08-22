@@ -1,7 +1,7 @@
 // Terrarium is distributed under the MIT license.
 
 import { Box3, Vector3, Raycaster } from "three";
-import SystemLite from "../engine/SystemLite";
+import SystemLite from "../SystemLite";
 
 const init = function() {
 	// Do nothing for now
