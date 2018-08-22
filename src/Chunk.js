@@ -1,9 +1,14 @@
 // Voxeland is distributed under the MIT license.
 
+// Globals
+const CHUNK_SIZE = 16;
+const BLOCK_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
+
 import {
-	Box3, BoxGeometry, Face3, Geometry, Mesh, MeshLambertMaterial, Object3D,
+	Box3, Face3, Geometry, Mesh, MeshLambertMaterial,
 	Vector2,
-	Vector3, TextureLoader } from "three";
+	Vector3, TextureLoader, NearestFilter,
+	LinearMipMapLinearFilter } from "three";
 class Chunk {
 
 	constructor( position, blockIndices ) {
@@ -11,12 +16,14 @@ class Chunk {
 		// Length is always 4096 (16 x 16 x 16)
 		this.blockIndices = blockIndices;
 
+		// Chunk coordinates:
 		this.position = position;
 
+		// Physical bounds within world
 		this.bounds = new Box3( this.position, new Vector3(
-			this.position.x + 16,
-			this.position.y + 16,
-			this.position.z + 16
+			this.position.x + CHUNK_SIZE,
+			this.position.y + CHUNK_SIZE,
+			this.position.z + CHUNK_SIZE
 		) );
 
 		// this.mesh = new Object3D();
@@ -28,13 +35,13 @@ class Chunk {
 	 * @param {Number} i - Index of block
 	 */
 	getBlockLocation( i ) {
-		if ( i < 0 || i > 4095 ) {
+		if ( i < 0 || i >= BLOCK_COUNT ) {
 			console.warn( "Block index out of bounds, cannot convert to location" );
 			return null;
 		}
-		const x = Math.floor( i / 256 );
-		const y = Math.floor( ( i - x * 256 ) / 16 );
-		const z = i % 16;
+		const x = Math.floor( i / Math.pow( CHUNK_SIZE, 2 ) );
+		const y = Math.floor( ( i - x * Math.pow( CHUNK_SIZE, 2 ) ) / CHUNK_SIZE );
+		const z = i % CHUNK_SIZE;
 		return new Vector3( x, y, z );
 	}
 
@@ -43,11 +50,14 @@ class Chunk {
 	 * @param {Vector3} vector - Vector within the chunk
 	 */
 	getBlockIndex( vector ) {
-		if ( this.bounds.containsPoint( vector ) === false ) {
-			console.warn( "Block vector out of bounds, cannot convert to index" );
-			return null;
-		}
-		return vector.x * 256 + vector.y * 16 + vector.z;
+		// if ( this.bounds.containsPoint( vector ) === false ) {
+		// 	console.warn( "Block vector out of bounds, cannot convert to index" );
+		// 	return null;
+		// }
+		const x = vector.x * Math.pow( CHUNK_SIZE, 2 );
+		const y = vector.y * CHUNK_SIZE;
+		const z = vector.z;
+		return x + y + z;
 	}
 
 	/**
@@ -64,98 +74,89 @@ class Chunk {
 	 * Regenerate the chunk mesh (destroys existing and replaces).
 	 */
 	generateMesh() {
-
-		console.log( "Generating mesh" );
 		this.geometry = new Geometry();
-		this.material = new MeshLambertMaterial({
-			color: 0xFFFF00,
-			map: new TextureLoader().load( "src/block.png" )
-		});
-		// For every block, check each side. if side is air, generate a face on that side
+		this.materials = [];
+		const loader = new TextureLoader();
 
-		// TODO: If all air or all solid, skip it
+		const grassSide = loader.load( "resources/textures/grass_side.png" );
+		grassSide.magFilter = NearestFilter;
+		grassSide.minFilter = LinearMipMapLinearFilter;
+		const grassTop = loader.load( "resources/textures/grass_top.png" );
+		grassTop.magFilter = NearestFilter;
+		grassTop.minFilter = LinearMipMapLinearFilter;
+		const dirt = loader.load( "resources/textures/dirt.png" );
+		dirt.magFilter = NearestFilter;
+		dirt.minFilter = LinearMipMapLinearFilter;
+		this.materials.push(
+			new MeshLambertMaterial({
+				color: 0xFFFFFF,
+				map: grassSide
+			}),
+			new MeshLambertMaterial({
+				color: 0xFFFFFF,
+				map: grassTop
+			}),
+			new MeshLambertMaterial({
+				color: 0xFFFFFF,
+				map: dirt
+			})
+		);
+		/*
+			This is a more efficient way to generating chunk geometry. Originally,
+			every single block was checked on all six sides, meaning the negative
+			direction had already been checked. For this reason, we check only the
+			blocks at x+1, y+1, and z+1. The exception is if x, y, or z are 0, a
+			negative face must be formed.
+		*/
 
-		for ( let i = 0; i < this.blockIndices.length; i++ ) {
+		// Use these for some DRY-loops
+		const axes = [ "x", "y", "z" ];
+		for ( let i = 0; i < BLOCK_COUNT; i++ ) {
+			const location = this.getBlockLocation( i );
+			axes.forEach( ( axis ) => {
 
-			// If block is air, skip it
-			if ( this.blockIndices[ i ] === 0 ) {
-				continue;
-			}
+				// Compute the neighbor location to check
+				const direction = new Vector3();
+				direction[ axis ] += 1;
+				const checkLocation = location.clone().add( direction );
 
-			const loc = this.getBlockLocation( i );
+				// Must generate a face for east/north/top sides of the chunk
+				if ( location[ axis ] === CHUNK_SIZE - 1 ) {
+					if ( this.blockIndices[ i ] !== 0 ) {
+						// Generate a face for that axis with positive normals
+						this.generateFace( i, direction );
+					}
+					return;
+				}
 
-			// const geometry = new BoxGeometry( 1, 1, 1 );
-			// const cube = new Mesh( geometry, this.material );
-			// cube.position.x = loc.x + 0.5;
-			// cube.position.y = loc.y + 0.5;
-			// cube.position.z = loc.z + 0.5;
+				// Must generate a face for west/south/bottom sides of the chunk
+				if ( location[ axis ] === 0 && this.blockIndices[ i ] !== 0 ) {
+					// Generate a face for that axis with negative normals
+					this.generateFace( i, direction.clone().negate() );
+				}
 
-			// This is cleaner than doing math because you need to check where this
-			// block is within the stack. Doing the below logic with an equation just
-			// duplicates the same logic as in the getBlockLocation method and that's
-			// not very DRY.
-			const neighbors = {
-				east:   this.findAdjacentBlock( i, new Vector3( 1, 0, 0 ) ),
-				west:   this.findAdjacentBlock( i, new Vector3( -1, 0, 0 ) ),
-				north:  this.findAdjacentBlock( i, new Vector3( 0, 1, 0 ) ),
-				south:  this.findAdjacentBlock( i, new Vector3( 0, -1, 0 ) ),
-				top:    this.findAdjacentBlock( i, new Vector3( 0, 0, 1 ) ),
-				bottom: this.findAdjacentBlock( i, new Vector3( 0, 0, -1 ) )
-			};
-
-			for ( const key in neighbors ) {
-				if ( neighbors.hasOwnProperty( key ) ) {
-					if ( neighbors[ key ] !== 1 ) {
-						this.generateFace( i, key );
+				// Perform logic checking if neighbor is solid or not
+				const j = this.getBlockIndex( checkLocation );
+				if ( this.blockIndices[ i ] !== 0 ) {
+					if ( this.blockIndices[ j ] === 0 ) {
+						// Generate a face for that axis with positive normals
+						// Use block i but since the coordinates of block i are on the neg
+						// corner (west/south/bottom)
+						this.generateFace( i, direction );
+					}
+				} else {
+					if ( this.blockIndices[ j ] !== 0 ) {
+						// Generate a face for that axis with negative normals
+						this.generateFace( j, direction.clone().negate() );
 					}
 				}
-			}
+			});
 		}
-		this.mesh = new Mesh( this.geometry, this.material );
+		this.mesh = new Mesh( this.geometry, this.materials );
 	}
 
-	findAdjacentBlock( i, direction ) {
-		const offset = direction.clone();
-
-		// TODO: Validate vector as unit vector and having only 1 axis
-		// offset.normalize();
-
-		const location = this.getBlockLocation( i );
-		const neighbor = this.getBlockIndex( location.add( offset ) );
-		return this.blockIndices[ neighbor ];
-	}
-
-	generateFace( position, face ) {
-		const p = new Vector3();
-		p.copy( this.getBlockLocation( position ) );
-
-		// 	// Check if position is a Vector3, index, or neither
-		// 	if ( position instanceof Vector3 ) {
-
-		// 		// Ensure vector is within the chunk bounds
-		// 		if ( !this.bounds.containsPoint( position ) ) {
-		// 			console.warn( "Vector was out of bounds!" );
-		// 			return;
-		// 		}
-
-		// 		p.copy( position );
-		// 	} else if ( typeof position === "number" ) {
-
-		// 		// Ensure the index is within the block indices
-		// 		if ( position < 0 || position > 4095 ) {
-		// 			console.warn( "Index was out of bounds!" );
-		// 			return;
-		// 		}
-
-		// 		// If it is valid, replace the Number with a Vector3
-		// 		p.copy( this.getBlockLocation( position ) );
-		// 	} else {
-		// 		console.warn( "Invalid face position!" );
-		// 		return;
-		// 	}
-
-		// 	// for each vertex, check if it already exists. slow but better than adding
-		// 	// every vertex preemtively and removing, or leaving, or trying to weld later
+	generateFace( index, direction ) {
+		const p = this.getBlockLocation( index );
 
 		// Create four vertices
 
@@ -168,77 +169,59 @@ class Chunk {
 			|  /    |
 			C ----- D
 		*/
-		let a;
-		let b;
-		let c;
-		let d;
-		switch( face ) {
-			case "north":
-				a = new Vector3( p.x,     p.y + 1, p.z + 1 );
-				b = new Vector3( p.x + 1, p.y + 1, p.z + 1 );
-				c = new Vector3( p.x + 1, p.y + 1, p.z     );
-				d = new Vector3( p.x,     p.y + 1, p.z     );
-				break;
-			case "south":
-				a = new Vector3( p.x + 1, p.y,     p.z + 1 );
-				b = new Vector3( p.x,     p.y,     p.z + 1 );
-				c = new Vector3( p.x,     p.y,     p.z     );
-				d = new Vector3( p.x + 1, p.y,     p.z     );
-				break;
-			case "west":
-				a = new Vector3( p.x,     p.y,     p.z + 1 );
-				b = new Vector3( p.x,     p.y + 1, p.z + 1 );
-				c = new Vector3( p.x,     p.y + 1, p.z     );
-				d = new Vector3( p.x,     p.y,     p.z     );
-				break;
-			case "east":
-				a = new Vector3( p.x + 1, p.y + 1, p.z + 1 );
-				b = new Vector3( p.x + 1, p.y,     p.z + 1 );
-				c = new Vector3( p.x + 1, p.y,     p.z     );
-				d = new Vector3( p.x + 1, p.y + 1, p.z     );
-				break;
-			case "top":
-				a = new Vector3( p.x + 1, p.y + 1, p.z + 1 );
-				b = new Vector3( p.x,     p.y + 1, p.z + 1 );
-				c = new Vector3( p.x,     p.y,     p.z + 1 );
-				d = new Vector3( p.x + 1, p.y,     p.z + 1 );
-				break;
-			case "bottom":
-				a = new Vector3( p.x,     p.y,     p.z     );
-				b = new Vector3( p.x,     p.y + 1, p.z     );
-				c = new Vector3( p.x + 1, p.y + 1, p.z     );
-				d = new Vector3( p.x + 1, p.y,     p.z     );
-				break;
+
+		// NEW CODE
+		const vectors = computeVectors( p, direction );
+
+		const indices = [];
+		vectors.forEach( ( vector ) => {
+			const index = findIndexByVector( this.geometry, vector );
+			if ( index >= 0 ) {
+				indices.push( index );
+			} else {
+				const length = this.geometry.vertices.push( vector );
+				indices.push( length - 1 );
+			}
+		});
+
+		// Create the faces
+		const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
+		const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
+
+		// Assign material
+		if (
+			direction.equals( new Vector3( 1, 0, 0 ) ) ||
+			direction.equals( new Vector3( 0, 1, 0 ) ) ||
+			direction.equals( new Vector3( -1, 0, 0 ) ) ||
+			direction.equals( new Vector3( 0, -1, 0 ) )
+		) {
+			faceA.materialIndex = 0;
+			faceB.materialIndex = 0;
 		}
-		// TODO: Check if any exists
-		// Find. if found, use that index. if not, push, and return length - 1
 
-		// Add vertices to mesh
-		const length = this.geometry.vertices.push( a, b, c, d );
-
-		const iD = length - 1;
-		const iC = length - 2;
-		const iB = length - 3;
-		const iA = length - 4;
+		if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
+			faceA.materialIndex = 1;
+			faceB.materialIndex = 1;
+		}
+		if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
+			faceA.materialIndex = 2;
+			faceB.materialIndex = 2;
+		}
 
 		// Add the face to the geometry's faces array
-		this.geometry.faces.push(
-			new Face3( iA, iB, iC ),
-			new Face3( iA, iC, iD )
-		);
+		this.geometry.faces.push( faceA, faceB );
 		this.geometry.faceVertexUvs.push( [] );
 		this.geometry.faceVertexUvs[ 0 ].push( [
-			new Vector2( 1, 0 ),
-			new Vector2( 0, 0 ),
-			new Vector2( 0, 1 )
+			new Vector2( 0, 1 ),
+			new Vector2( 1, 1 ),
+			new Vector2( 1, 0 )
 		] );
 		this.geometry.faceVertexUvs[ 0 ].push( [
-			new Vector2( 1, 0 ),
 			new Vector2( 0, 1 ),
-			new Vector2( 1, 1 )
+			new Vector2( 1, 0 ),
+			new Vector2( 0, 0 )
 		] );
 		this.geometry.computeFaceNormals();
-		this.geometry.computeVertexNormals();
 	}
 
 	/**
@@ -248,7 +231,7 @@ class Chunk {
 	 * @param {Number} value
 	 */
 	updateMesh( i, value ) {
-
+		console.log( i, value );
 	}
 }
 
@@ -271,3 +254,101 @@ console.log( "x:", compX );
 console.log( "y:", compY );
 console.log( "z:", compZ );
 */
+
+/**
+ *
+ * @param {Geometry} geometry - The geometry to search through
+ * @param {Vector3} location - The location to check
+ * @returns {Number} - The index of the matching vertex
+ */
+function findIndexByVector( geometry, location ) {
+	let vertex;
+
+	// 'for' loop is used here for performance reasons
+	for ( let i = 0, length = geometry.vertices.length; i < length; i++ ) {
+		vertex = geometry.vertices[ i ];
+
+		// The Three.js .equals() method is simply a triple comparison for x,y,z
+		if ( vertex.equals( location ) ) {
+
+			// Return the index (we already know the location of that vertex anyway)
+			return geometry.vertices.indexOf( vertex );
+		}
+	}
+	return -1;
+}
+
+/**
+ * @description asdfasdf
+ * @param {*} p
+ * @param {*} d
+ */
+function computeVectors( p, d ) {
+	const vectors = [];
+
+	// "East"
+	if ( d.equals( new Vector3( 1, 0, 0 ) ) ) {
+		vectors.push(
+			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
+			new Vector3( p.x + 1, p.y,     p.z + 1 ),
+			new Vector3( p.x + 1, p.y,     p.z     ),
+			new Vector3( p.x + 1, p.y + 1, p.z     )
+		);
+		return vectors;
+	}
+
+	// "North"
+	if ( d.equals( new Vector3( 0, 1, 0 ) ) ) {
+		vectors.push(
+			new Vector3( p.x,     p.y + 1, p.z + 1 ),
+			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
+			new Vector3( p.x + 1, p.y + 1, p.z     ),
+			new Vector3( p.x,     p.y + 1, p.z     )
+		);
+		return vectors;
+	}
+
+	// "Up"
+	if ( d.equals( new Vector3( 0, 0, 1 ) ) ) {
+		vectors.push(
+			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
+			new Vector3( p.x,     p.y + 1, p.z + 1 ),
+			new Vector3( p.x,     p.y,     p.z + 1 ),
+			new Vector3( p.x + 1, p.y,     p.z + 1 )
+		);
+		return vectors;
+	}
+
+	// "West"
+	if ( d.equals( new Vector3( -1, 0, 0 ) ) ) {
+		vectors.push(
+			new Vector3( p.x,     p.y,     p.z + 1 ),
+			new Vector3( p.x,     p.y + 1, p.z + 1 ),
+			new Vector3( p.x,     p.y + 1, p.z     ),
+			new Vector3( p.x,     p.y,     p.z     )
+		);
+		return vectors;
+	}
+
+	// "South"
+	if ( d.equals( new Vector3( 0, -1, 0 ) ) ) {
+		vectors.push(
+			new Vector3( p.x + 1, p.y,     p.z + 1 ),
+			new Vector3( p.x,     p.y,     p.z + 1 ),
+			new Vector3( p.x,     p.y,     p.z     ),
+			new Vector3( p.x + 1, p.y,     p.z     )
+		);
+		return vectors;
+	}
+
+	// "Bottom"
+	if ( d.equals( new Vector3( 0, 0, -1 ) ) ) {
+		vectors.push(
+			new Vector3( p.x,     p.y,     p.z     ),
+			new Vector3( p.x,     p.y + 1, p.z     ),
+			new Vector3( p.x + 1, p.y + 1, p.z     ),
+			new Vector3( p.x + 1, p.y,     p.z     )
+		);
+		return vectors;
+	}
+}
