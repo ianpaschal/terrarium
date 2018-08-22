@@ -35,7 +35,7 @@ class Player {
 
 		// Assign handlers
 		// Esc
-		this.keyboardControls.assignHandler( 27, () => {
+		this.keyboardControls.addHandler( 27, () => {
 			if ( !this.enabled ) {
 				this.enabled = true;
 				const blocker = document.getElementById( "blocker" );
