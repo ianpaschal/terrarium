@@ -14,24 +14,9 @@ class Player {
 		this.model = new Object3D();
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
-
-		this.controls = new PointerLockControls( camera );
-
-		this.keyboardControls = new KeyboardControls();
-
-		camera.up.set( 0, 0, 1 );
-		camera.lookAt( new Vector3( 0, 1, 0 ) );
-
 		this.AABB = new Box3();
 
-		this.pitchObject = new Object3D();
-		this.pitchObject.add( camera );
-		this.pitchObject.position.z += 0.5;
-		this.model.add( this.pitchObject );
-		document.addEventListener( "mousemove", this.look.bind( this ), false );
-		this.enabled = false;
-
-		this.model.add( this.controls.getObject() );
+		this.keyboardControls = new KeyboardControls();
 
 		// Assign handlers
 		// Esc
@@ -141,6 +126,21 @@ class Player {
 	}
 	set velocity( vector ) {
 		this.model.velocity = vector;
+	}
+
+	attachCamera( camera ) {
+		this.controls = new PointerLockControls( camera );
+		camera.up.set( 0, 0, 1 );
+		camera.lookAt( new Vector3( 0, 1, 0 ) );
+
+		this.pitchObject = new Object3D();
+		this.pitchObject.add( camera );
+		this.pitchObject.position.z += 0.5;
+		this.model.add( this.pitchObject );
+		document.addEventListener( "mousemove", this.look.bind( this ), false );
+		this.enabled = false;
+
+		this.model.add( this.controls.getObject() );
 	}
 }
 export default Player;
