@@ -1,4 +1,4 @@
-// Voxeland is distributed under the MIT license.
+// Terrarium is distributed under the MIT license.
 import TestArea from "../world/TestArea";
 import SystemLite from "../engine/SystemLite";
 import SimplexNoise from "simplex-noise";

@@ -1,5 +1,5 @@
 {
-  "name": "voxeland",
+  "name": "terrarium",
   "version": "1.0.0",
   "description": "A JavaScript clone of Minecraft with some improvements (I think).",
   "main": "./dist/main.js",
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ianpaschal/voxeland.git"
+    "url": "git+https://github.com/ianpaschal/terrarium.git"
   },
   "author": "Ian Paschal",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ianpaschal/voxeland/issues"
+    "url": "https://github.com/ianpaschal/terrarium/issues"
   },
-  "homepage": "https://github.com/ianpaschal/voxeland#readme",
+  "homepage": "https://github.com/ianpaschal/terrarium#readme",
   "dependencies": {
     "simplex-noise": "^2.4.0",
     "three": "^0.94.0",

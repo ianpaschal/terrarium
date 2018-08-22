@@ -1,4 +1,4 @@
-// Voxeland is distributed under the MIT license.
+// Terrarium is distributed under the MIT license.
 
 import {
 	Fog, AmbientLight, HemisphereLight, DirectionalLight, Object3D

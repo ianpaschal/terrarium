@@ -1,4 +1,4 @@
-// Voxeland is distributed under the MIT license.
+// Terrarium is distributed under the MIT license.
 
 import { Box3, Vector3, Raycaster } from "three";
 import SystemLite from "../engine/SystemLite";

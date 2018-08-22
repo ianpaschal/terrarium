@@ -1,4 +1,4 @@
-// Voxeland is distributed under the MIT license.
+// Terrarium is distributed under the MIT license.
 
 // Globals
 const CHUNK_SIZE = 16;
