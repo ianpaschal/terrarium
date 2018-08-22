@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import { BoxGeometry, Mesh, MeshLambertMaterial, Object3D } from "three";
 import store from "../store";
 const size = 16;

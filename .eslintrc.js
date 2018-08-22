@@ -18,7 +18,7 @@ module.exports = {
 		"brace-style":               [ 2, "1tbs" ],
 		"comma-spacing":             [ 2, { "before": false, "after": true } ],
 		"comma-style":               [ 2, "last" ],
-		"complexity":                [ 1, 8 ],
+		"complexity":                [ 1, 12 ],
 		"computed-property-spacing": [ 2, "always" ],
 		"dot-notation":              [ 2 ],
 		"indent":                    [ 2, "tab", { "SwitchCase": 1 } ],

@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import { Scene } from "three";
 import Vue from "vue";
 import Vuex from "vuex";

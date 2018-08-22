@@ -1,3 +1,5 @@
+// Voxeland is distributed under the MIT license.
+
 import {
 	AmbientLight, HemisphereLight, DirectionalLight, Object3D
 } from "three";
