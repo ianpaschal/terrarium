@@ -4,6 +4,7 @@ import {
 	Fog, AmbientLight, HemisphereLight, DirectionalLight, Object3D
 } from "three";
 import SystemLite from "../SystemLite";
+import Sky from "../../Sky";
 
 const init = function() {
 	// Do nothing for now
@@ -45,6 +46,10 @@ function buildRig() {
 	root.add( ambientLight );
 	root.add( hemiLight );
 	root.add( dirLight );
+
+	const sky = new Sky();
+	sky.scale.setScalar( 450000 );
+	root.add( sky );
 	return root;
 
 }

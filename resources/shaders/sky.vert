@@ -24,7 +24,7 @@ varying vec3 vBetaR;
 varying vec3 vBetaM;
 varying float vSunE;
 
-const vec3 up = vec3( 0.0, 1.0, 0.0 );
+const vec3 up = vec3( 0.0, 0.0, 1.0 );
 
 // constants for atmospheric scattering
 const float e = 2.71828182845904523536028747135266249775724709369995957;
@@ -71,7 +71,7 @@ void main() {
 
 	vSunE = sunIntensity( dot( vSunDirection, up ) );
 
-	vSunfade = 1.0 - clamp( 1.0 - exp( ( sunPosition.y / 450000.0 ) ), 0.0, 1.0 );
+	vSunfade = 1.0 - clamp( 1.0 - exp( ( sunPosition.z / 450000.0 ) ), 0.0, 1.0 );
 
 	float rayleighCoefficient = rayleigh - ( 1.0 * ( 1.0 - vSunfade ) );
 
