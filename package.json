@@ -42,7 +42,7 @@
     "babel-preset-stage-3": "^6.24.1",
     "cross-env": "^5.2.0",
     "css-loader": "^0.25.0",
-    "electron": "^2.0.4",
+    "electron": "^2.0.8",
     "electron-builder": "^19.56.2",
     "electron-reload": "^1.0.2",
     "eslint": "^4.19.1",
