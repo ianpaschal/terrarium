@@ -1,6 +1,12 @@
 import FS from "fs";
-import { BoxBufferGeometry, Mesh,
-	Vector3, UniformsUtils, BackSide, ShaderMaterial } from "three";
+import {
+	BoxBufferGeometry,
+	Mesh,
+	Vector3,
+	UniformsUtils,
+	BackSide,
+	ShaderMaterial
+} from "three";
 
 class Sky {
 	constructor() {

@@ -10,9 +10,8 @@ module.exports = {
 		__filename: true,
 	},
 	entry: {
-		play: "./src/play.js",
 		main: "./src/main.js",
-		demo: "./src/demo.js"
+		play: "./src/play.js"
 	},
 	module: {
 		rules: [

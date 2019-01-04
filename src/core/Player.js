@@ -113,38 +113,41 @@ class Player {
 		);
 	}
 
-	getHorizontalMovement() {
-		const input = new Vector2();
+	get normalInput() {
+		let x = 0;
+		let y = 0;
+		let z = 0;
 		if ( this.input.left ) {
-			input.x -= 1;
+			x -= 1;
 		}
 		if ( this.input.right ) {
-			input.x += 1;
+			x += 1;
 		}
 		if ( this.input.forward ) {
-			input.y += 1;
+			y += 1;
 		}
 		if ( this.input.backward ) {
-			input.y -= 1;
+			y -= 1;
+		}
+		if ( this.input.up ) {
+			z += 1;
+		}
+		if ( this.input.down ) {
+			z -= 1;
 		}
 		/**
 		 * Normalize the input so that holding forward and left doesn't create a
 		 * "faster" or "more powerful" diagonal movement.
 		 */
-		input.normalize();
-		input.rotateAround( new Vector2( 0, 0 ), this.model.rotation.z );
-		return input;
-	}
+		const horizontal = new Vector2( x, y );
+		horizontal.normalize();
+		horizontal.rotateAround( new Vector2( 0, 0 ), this.model.rotation.z );
 
-	getVerticalMovement() {
-		let input = 0;
-		if ( this.input.up ) {
-			input += 1;
-		}
-		if ( this.input.down ) {
-			input -= 1;
-		}
-		return input;
+		return new Vector3(
+			horizontal.x,
+			horizontal.y,
+			z
+		);
 	}
 
 	get velocity() {
@@ -152,6 +155,13 @@ class Player {
 	}
 	set velocity( vector ) {
 		this.model.velocity = vector;
+	}
+
+	get position() {
+		return this.model.position;
+	}
+	set position( vector ) {
+		this.model.position = vector;
 	}
 
 	attachCamera( camera ) {

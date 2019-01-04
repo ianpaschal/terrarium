@@ -16,7 +16,7 @@ const init = function() {
 	this.chunks = [];
 
 	const worldSize = 4;
-	const scale = 16;
+	const scale = 32;
 
 	for ( let chunkX = worldSize / -2; chunkX < worldSize / 2; chunkX++ ) {
 		for ( let chunkY = worldSize / -2; chunkY < worldSize / 2; chunkY++ ) {
