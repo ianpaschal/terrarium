@@ -38,7 +38,7 @@ const float N = 2.545E25; // number of molecules per unit volume for air at
 // optical length at zenith for molecules
 const float rayleighZenithLength = 8.4E3;
 const float mieZenithLength = 1.25E3;
-const vec3 up = vec3( 0.0, 1.0, 0.0 );
+const vec3 up = vec3( 0.0, 0.0, 1.0 );
 // 66 arc seconds -> degrees, and the cosine of that
 const float sunAngularDiameterCos = 0.999956676946448443553574619906976478926848692873900859324;
 
