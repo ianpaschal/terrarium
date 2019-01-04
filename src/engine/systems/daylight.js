@@ -29,7 +29,7 @@ function buildRig() {
 	// STORE.state.scene.add( hemiLightHelper );
 	const dirLight = new DirectionalLight( 0xffffff, 0.5 );
 	// dirLight.color.setHSL( 0.1, 1, 0.95 );
-	dirLight.position.set( 50, -50, 50 );
+	dirLight.position.set( 50, 0, 50 );
 	dirLight.position.multiplyScalar( 30 );
 	dirLight.castShadow = true;
 	dirLight.shadow.mapSize.width = 2048;
