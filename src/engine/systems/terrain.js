@@ -48,12 +48,6 @@ const init = function() {
 			this._engine.scene.add( chunk.mesh );
 		}
 	}
-
-	const floorGeometry = new PlaneGeometry( 1024, 1024, 1, 1 );
-	const floorMaterial = new MeshLambertMaterial({ color: 0xEEEEEE });
-	const floor = new Mesh( floorGeometry, floorMaterial );
-	// floor.position.z -= 4;
-	this._engine.scene.add( floor );
 };
 
 const update = function( t ) {
