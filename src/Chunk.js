@@ -233,6 +233,21 @@ class Chunk {
 	updateMesh( i, value ) {
 		console.log( i, value );
 	}
+
+	isSolid( vector ) {
+		const location = new Vector3();
+		location.set(
+			Math.floor( vector.x ),
+			Math.floor( vector.y ),
+			Math.floor( vector.z )
+		);
+		const index = this.getBlockIndex( location );
+		const block = this.blockIndices[ index ];
+		if ( block === 0 ) {
+			return false;
+		}
+		return true;
+	}
 }
 
 export default Chunk;

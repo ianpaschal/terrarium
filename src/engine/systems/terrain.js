@@ -46,6 +46,7 @@ const init = function() {
 			const chunk = new Chunk( chunkPosition, chunkData );
 			chunk.mesh.position.copy( chunkPosition );
 			this._engine.scene.add( chunk.mesh );
+			this.chunks.push( chunk );
 		}
 	}
 
