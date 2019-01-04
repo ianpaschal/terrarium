@@ -1,7 +1,7 @@
 // Terrarium is distributed under the MIT license.
 
 import Vue from "vue";
-import store from "./store";
+import store from "../store";
 import App from "./components/App.vue";
 // import DaylightSystem from "./world/DaylightSystem";
 // import Terrain from "./world/Terrain";

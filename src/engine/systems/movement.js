@@ -12,39 +12,63 @@ const update = function( t ) {
 	t = t / 1000; // Use s instead of ms
 
 	// Compute the player input, normalize the INPUT
-	const horizontalMovement = this._engine.player.getHorizontalMovement();
+	const input = new Vector3(
+		this._engine.player.getHorizontalMovement().x,
+		this._engine.player.getHorizontalMovement().y,
+		this._engine.player.getVerticalMovement()
+	);
 
 	// TODO: Right now this is weird and non physicsy. Replace with proper accelerations
 
-	const model = this._engine.player.getModel();
 	const playerSpeed = 100;
+	const playerMass = 100;
 
-	// If touching the ground, apply movement; if not, apply gravity
-	if ( this._engine.player.collisions.z ) {
-		model.velocity.x -= model.velocity.x * 10 * t;
-		model.velocity.y -= model.velocity.y * 10 * t;
-		model.velocity.x += horizontalMovement.x * playerSpeed * t;
-		model.velocity.y += horizontalMovement.y * playerSpeed * t;
-	} else {
-		model.velocity.x -= model.velocity.x * 1 * t;
-		model.velocity.y -= model.velocity.y * 1 * t;
-		model.velocity.z -= 9.8 * t;
-	}
+	const fGravity = -9.8 * playerMass;
+	const fAirResistance = 10;
 
-	// Get intended movement and compute collisions
-	const movement = model.velocity.clone().multiplyScalar( t );
-	this._engine.player.collisions = findCollisions(
-		model,
-		this._engine.scene,
-		movement
-	);
-	const constrained = constrainMotion(
-		this._engine.player.collisions,
-		movement
-	);
+	const { mode, model } = this._engine.player;
 
-	// Convert to constrained movement and apply to the player position
-	model.position.add( constrained );
+	// Dampen existing velocity:
+	model.velocity.x -= model.velocity.x * 5 * t; // Friction
+	model.velocity.y -= model.velocity.y * 5 * t;
+	model.velocity.z -= model.velocity.z * 5 * t;
+
+	// Apply input:
+	model.velocity.x += input.x * playerSpeed * t;
+	model.velocity.y += input.y * playerSpeed * t;
+	model.velocity.z += input.z * playerSpeed * t;
+
+	// Apply velocity to position
+	model.position.x += model.velocity.x * t;
+	model.position.y += model.velocity.y * t;
+	model.position.z += model.velocity.z * t;
+
+	// // If touching the ground, apply movement; if not, apply gravity
+	// if ( this._engine.player.collisions.z ) {
+	// 	model.velocity.x -= model.velocity.x * 10 * t; // Ground friction
+	// 	model.velocity.y -= model.velocity.y * 10 * t;
+	// 	model.velocity.x += horizontalMovement.x * playerSpeed * t;
+	// 	model.velocity.y += horizontalMovement.y * playerSpeed * t;
+	// } else {
+	// 	model.velocity.x -= model.velocity.x * 1 * t; // Air friction
+	// 	model.velocity.y -= model.velocity.y * 1 * t;
+	// 	model.velocity.z -= 9.8 * t;
+	// }
+
+	// // Get intended movement and compute collisions
+	// const movement = model.velocity.clone().multiplyScalar( t );
+	// this._engine.player.collisions = findCollisions(
+	// 	model,
+	// 	this._engine.scene,
+	// 	movement
+	// );
+	// const constrained = constrainMotion(
+	// 	this._engine.player.collisions,
+	// 	movement
+	// );
+
+	// // Convert to constrained movement and apply to the player position
+	// model.position.add( constrained );
 };
 
 function findCollisions( model, scene, distance ) {

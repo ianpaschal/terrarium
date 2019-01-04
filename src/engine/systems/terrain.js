@@ -4,7 +4,7 @@
 import SystemLite from "../SystemLite";
 import SimplexNoise from "simplex-noise";
 import { Vector3, PlaneGeometry, MeshLambertMaterial, Mesh } from "three";
-import Chunk from "../../Chunk";
+import Chunk from "../../core/Chunk";
 
 const init = function() {
 	// const terrain = new TestArea();

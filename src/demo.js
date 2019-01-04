@@ -7,7 +7,7 @@ import {
 	Vector3,
 	WebGLRenderer
 } from "three";
-import Player from "./Player";
+import Player from "./core/Player";
 import engine from "./engine";
 
 // Hack until we have entities:

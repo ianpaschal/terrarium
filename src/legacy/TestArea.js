@@ -9,7 +9,7 @@ import {
 } from "three";
 
 import Chunk from "../chunk";
-import testChunk from "../testChunk";
+import testChunk from "./testChunk";
 
 class TestArea {
 	constructor() {

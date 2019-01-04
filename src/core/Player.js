@@ -1,8 +1,8 @@
 // Terrarium is distributed under the MIT license.
 
 import { Box3, Object3D, Vector2, Vector3 } from "three";
-import PointerLockControls from "./controls/PointerLockControls";
-import KeyboardControls from "./controls/KeyboardControls";
+import PointerLockControls from "../controls/PointerLockControls";
+import KeyboardControls from "../controls/KeyboardControls";
 
 function clip( min, value, max ) {
 	return Math.max( min, Math.min( max, value ) );
@@ -15,6 +15,8 @@ class Player {
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
 		this.AABB = new Box3();
+
+		this.mode = 0;
 
 		this.keyboardControls = new KeyboardControls();
 
@@ -36,9 +38,16 @@ class Player {
 
 		// Space
 		this.keyboardControls.addHandler( 32, () => {
-			if ( this.collisions.z ) {
-				this.model.velocity.z += 10;
-			}
+			this.input.up = true;
+		}, () => {
+			this.input.up = false;
+		});
+
+		// Shift
+		this.keyboardControls.addHandler( 16, () => {
+			this.input.down = true;
+		}, () => {
+			this.input.down = false;
 		});
 
 		// A
@@ -79,7 +88,9 @@ class Player {
 			forward: false,
 			backward: false,
 			left: false,
-			right: false
+			right: false,
+			up: false,
+			down: false
 		};
 
 	}
@@ -116,8 +127,23 @@ class Player {
 		if ( this.input.backward ) {
 			input.y -= 1;
 		}
+		/**
+		 * Normalize the input so that holding forward and left doesn't create a
+		 * "faster" or "more powerful" diagonal movement.
+		 */
 		input.normalize();
 		input.rotateAround( new Vector2( 0, 0 ), this.model.rotation.z );
+		return input;
+	}
+
+	getVerticalMovement() {
+		let input = 0;
+		if ( this.input.up ) {
+			input += 1;
+		}
+		if ( this.input.down ) {
+			input -= 1;
+		}
 		return input;
 	}
 

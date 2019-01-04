@@ -4,7 +4,7 @@ import {
 	Fog, AmbientLight, HemisphereLight, DirectionalLight, Object3D
 } from "three";
 import SystemLite from "../SystemLite";
-import Sky from "../../Sky";
+import Sky from "../../world/Sky";
 
 const init = function() {
 	// Do nothing for now
