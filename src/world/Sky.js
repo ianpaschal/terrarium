@@ -27,7 +27,7 @@ class Sky {
 				value: 0.8
 			},
 			sunPosition: {
-				value: new Vector3( 0, Math.sin( Math.PI / 4 ), Math.cos( Math.PI / 4 ) )
+				value: new Vector3( 1, 0, 1 )
 			}
 		};
 
