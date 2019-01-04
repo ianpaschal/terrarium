@@ -1,12 +1,9 @@
 // Terrarium is distributed under the MIT license.
 
-import { Box3, Object3D, Vector2, Vector3 } from "three";
+import { Box3, Object3D, Vector2, Vector3, Raycaster } from "three";
 import PointerLockControls from "../controls/PointerLockControls";
 import KeyboardControls from "../controls/KeyboardControls";
-
-function clip( min, value, max ) {
-	return Math.max( min, Math.min( max, value ) );
-}
+import VoxelCursor from "../controls/VoxelCursor";
 
 class Player {
 
@@ -14,21 +11,44 @@ class Player {
 		this.model = new Object3D();
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
+		this.camera = camera;
+		camera.up.set( 0, 0, 1 );
+		this.camera.rotation.set( Math.PI / 2, 0, 0 );
+		this.pitchObject = new Object3D();
+		this.pitchObject.add( camera );
+		this.model.position.z = 10;
+		this.model.add( this.pitchObject );
 		this.AABB = new Box3();
+
+		this.mouse = new Vector2( 0, 0 );
+		this.raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
 
 		this.mode = 0;
 
+		this.mouseControls = new PointerLockControls();
 		this.keyboardControls = new KeyboardControls();
+		this.mouseControls.addHandler( "move", ( pitch, yaw ) => {
+			this.model.rotation.z = yaw;
+			this.pitchObject.rotation.x = pitch;
+		});
+		this.mouseControls.addHandler( 0, () => {
+			console.log( "Left clicked!" );
+		});
+		this.mouseControls.addHandler( 2, () => {
+			console.log( "Right clicked!" );
+		});
 
 		// Assign handlers
 		// Esc
 		this.keyboardControls.addHandler( 27, () => {
 			if ( !this.enabled ) {
+				this.mouseControls.enabled = true;
 				this.enabled = true;
 				const blocker = document.getElementById( "blocker" );
 				blocker.style.display = "none";
 				document.body.requestPointerLock();
 			} else {
+				this.mouseControls.enabled = false;
 				this.enabled = false;
 				const blocker = document.getElementById( "blocker" );
 				blocker.style.display = "";
@@ -99,20 +119,6 @@ class Player {
 		return this.model;
 	}
 
-	look( e ) {
-		if ( !this.enabled ) return;
-		const movementX = e.movementX || 0;
-		const movementY = e.movementY || 0;
-		const PI_2 = Math.PI / 2;
-		this.model.rotation.z -= movementX * 0.002;
-		this.pitchObject.rotation.x -= movementY * 0.002;
-
-		// Limit pitch to to ±90º
-		this.pitchObject.rotation.x = clip(
-			-PI_2, this.pitchObject.rotation.x, PI_2
-		);
-	}
-
 	get normalInput() {
 		let x = 0;
 		let y = 0;
@@ -164,19 +170,13 @@ class Player {
 		this.model.position = vector;
 	}
 
-	attachCamera( camera ) {
-		this.controls = new PointerLockControls( camera );
-		camera.up.set( 0, 0, 1 );
-		camera.lookAt( new Vector3( 0, 1, 0 ) );
+	attachCursor( scene ) {
+		this.cursor = new VoxelCursor();
 
-		this.pitchObject = new Object3D();
-		this.pitchObject.add( camera );
-		this.pitchObject.position.z += 0.5;
-		this.model.add( this.pitchObject );
-		document.addEventListener( "mousemove", this.look.bind( this ), false );
-		this.enabled = false;
+		scene.add( this.cursor );
 
-		this.model.add( this.controls.getObject() );
+		this.terrain = scene.getObjectByName( "terrain", true );
+		
 	}
 }
 export default Player;

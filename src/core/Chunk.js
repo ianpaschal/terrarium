@@ -188,6 +188,9 @@ class Chunk {
 		const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
 		const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
 
+		faceA.voxelPosition = this.getBlockLocation( index ).add( this.position );
+		faceB.voxelPosition = this.getBlockLocation( index ).add( this.position );
+
 		// Assign material
 		if (
 			direction.equals( new Vector3( 1, 0, 0 ) ) ||

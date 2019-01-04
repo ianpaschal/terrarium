@@ -3,7 +3,7 @@
 // import TestArea from "../world/TestArea";
 import SystemLite from "../SystemLite";
 import SimplexNoise from "simplex-noise";
-import { Vector3, PlaneGeometry, MeshLambertMaterial, Mesh } from "three";
+import { Vector3, Object3D } from "three";
 import Chunk from "../../core/Chunk";
 
 const init = function() {
@@ -14,6 +14,9 @@ const init = function() {
 	console.log( "generating terrain" );
 
 	this.chunks = [];
+
+	const terrain = new Object3D();
+	terrain.name = "terrain";
 
 	const worldSize = 4;
 	const scale = 32;
@@ -45,9 +48,12 @@ const init = function() {
 			// Now create a chunk with the data:
 			const chunk = new Chunk( chunkPosition, chunkData );
 			chunk.mesh.position.copy( chunkPosition );
-			this._engine.scene.add( chunk.mesh );
+			terrain.add( chunk.mesh );
+			this._engine.chunks.push( chunk );
+			this._engine.chunkMeshes.push( chunk.mesh );
 		}
 	}
+	this._engine.scene.add( terrain );
 };
 
 const update = function( t ) {
