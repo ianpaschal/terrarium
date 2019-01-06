@@ -1,40 +1,55 @@
 // Terrarium is distributed under the MIT license.
 
-import { Object3D } from "three";
+function clip( min, value, max ) {
+	return Math.max( min, Math.min( max, value ) );
+}
 
 class PointerLockControls {
-	constructor( camera ) {
-		camera.rotation.set( 0, 0, 0 );
-		this.pitchObject = new Object3D();
-		this.pitchObject.add( camera );
-		this.yawObject = new Object3D();
-		this.yawObject.position.z = 10;
-		this.yawObject.add( this.pitchObject );
-		document.addEventListener( "mousemove", this.move.bind( this ), false );
+	constructor() {
+
+		this.pitch = 0;
+		this.yaw = 0;
+		this.sensitivity = {
+			x: 0.5,
+			y: 0.5
+		};
+
+		this.handlers = {
+			0: undefined,
+			1: undefined,
+			2: undefined,
+			"move": undefined
+		};
+
+		document.addEventListener( "mousemove", this.look.bind( this ), false );
+		document.addEventListener( "mousedown", this.click.bind( this ), false );
 		this.enabled = false;
 	}
 
-	move( e ) {
-		if ( !this.enabled ) return;
-		const movementX = e.movementX || 0;
-		const movementY = e.movementY || 0;
-		const PI_2 = Math.PI / 2;
-		this.yawObject.rotation.z -= movementX * 0.002;
-		this.pitchObject.rotation.x -= movementY * 0.002;
-		this.pitchObject.rotation.x = Math.max(
-			- PI_2,
-			Math.min(
-				PI_2, this.pitchObject.rotation.x
-			)
-		);
+	addHandler( button, fn ) {
+		this.handlers[ button ] = fn;
 	}
 
-	dispose() {
-		document.removeEventListener( "mousemove", this.onMouseMove, false );
+	look( e ) {
+		if ( !this.enabled ) {
+			return;
+		}
+		this.yaw -= e.movementX * ( this.sensitivity.x / 256 );
+		this.pitch -= e.movementY * ( this.sensitivity.y / 256 );
+
+		// Limit pitch to to ±90º
+		this.pitch = clip( Math.PI / -2, this.pitch, Math.PI / 2 );
+
+		// Apply it back to the player
+		if ( this.handlers.move ) {
+			this.handlers.move( this.pitch, this.yaw );
+		}
 	}
 
-	getObject() {
-		return this.yawObject;
+	click( e ) {
+		if ( this.handlers[ e.button ] ) {
+			this.handlers[ e.button ]();
+		}
 	}
 }
 export default PointerLockControls;

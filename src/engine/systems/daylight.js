@@ -3,18 +3,23 @@
 import {
 	Fog, AmbientLight, HemisphereLight, DirectionalLight, Object3D
 } from "three";
-import SystemLite from "../SystemLite";
-import Sky from "../../Sky";
+import { System } from "aurora";
+import Sky from "../../world/Sky";
+import scene from "../../scene";
 
-const init = function() {
-	// Do nothing for now
-	this._engine.scene.fog = new Fog( 0xffffff, 0, 512 );
-	this._engine.scene.add( buildRig() );
-};
-
-const update = function( t ) {
-	// Do nothing for now
-};
+export default new System({
+	name: "daylight",
+	fixed: false,
+	step: 500,
+	componentTypes: [],
+	onInit() {
+		scene.fog = new Fog( 0xffffff, 0, 512 );
+		scene.add( buildRig() );
+	},
+	onUpdate( t ) {
+		// Do nothing for now
+	}
+});
 
 function buildRig() {
 	const root = new Object3D();
@@ -29,7 +34,7 @@ function buildRig() {
 	// STORE.state.scene.add( hemiLightHelper );
 	const dirLight = new DirectionalLight( 0xffffff, 0.5 );
 	// dirLight.color.setHSL( 0.1, 1, 0.95 );
-	dirLight.position.set( 50, -50, 50 );
+	dirLight.position.set( 50, 0, 50 );
 	dirLight.position.multiplyScalar( 30 );
 	dirLight.castShadow = true;
 	dirLight.shadow.mapSize.width = 2048;
@@ -53,5 +58,3 @@ function buildRig() {
 	return root;
 
 }
-
-export default new SystemLite( init, update );

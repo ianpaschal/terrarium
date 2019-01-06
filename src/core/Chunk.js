@@ -8,7 +8,8 @@ import {
 	Box3, Face3, Geometry, Mesh, MeshLambertMaterial,
 	Vector2,
 	Vector3, TextureLoader, NearestFilter,
-	LinearMipMapLinearFilter } from "three";
+	LinearMipMapLinearFilter
+} from "three";
 class Chunk {
 
 	constructor( position, blockIndices ) {
@@ -27,7 +28,9 @@ class Chunk {
 		) );
 
 		// this.mesh = new Object3D();
-		this.generateMesh();
+		this.generateGeometry();
+		this.generateMaterials();
+		this.mesh = new Mesh( this.geometry, this.materials );
 	}
 
 	/**
@@ -70,23 +73,22 @@ class Chunk {
 		});
 	}
 
-	/**
-	 * Regenerate the chunk mesh (destroys existing and replaces).
-	 */
-	generateMesh() {
-		this.geometry = new Geometry();
+	generateMaterials() {
 		this.materials = [];
 		const loader = new TextureLoader();
 
-		const grassSide = loader.load( "resources/textures/grass_side.png" );
+		const grassSide = loader.load( "../resources/textures/grass_side.png" );
 		grassSide.magFilter = NearestFilter;
 		grassSide.minFilter = LinearMipMapLinearFilter;
-		const grassTop = loader.load( "resources/textures/grass_top.png" );
+		const grassTop = loader.load( "../resources/textures/grass_top.png" );
 		grassTop.magFilter = NearestFilter;
 		grassTop.minFilter = LinearMipMapLinearFilter;
-		const dirt = loader.load( "resources/textures/dirt.png" );
+		const dirt = loader.load( "../resources/textures/dirt.png" );
 		dirt.magFilter = NearestFilter;
 		dirt.minFilter = LinearMipMapLinearFilter;
+		const cobbleStone = loader.load( "../resources/textures/cobble_stone.png" );
+		cobbleStone.magFilter = NearestFilter;
+		cobbleStone.minFilter = LinearMipMapLinearFilter;
 		this.materials.push(
 			new MeshLambertMaterial({
 				color: 0xFFFFFF,
@@ -99,8 +101,23 @@ class Chunk {
 			new MeshLambertMaterial({
 				color: 0xFFFFFF,
 				map: dirt
+			}),
+			new MeshLambertMaterial({
+				color: 0xFFFFFF,
+				map: cobbleStone
 			})
 		);
+		if ( this.mesh ) {
+			this.mesh.materials = this.materials;
+		}
+	}
+
+	/**
+	 * Regenerate the chunk mesh (destroys existing and replaces).
+	 */
+	generateGeometry() {
+		this.geometry = new Geometry();
+
 		/*
 			This is a more efficient way to generating chunk geometry. Originally,
 			every single block was checked on all six sides, meaning the negative
@@ -152,7 +169,13 @@ class Chunk {
 				}
 			});
 		}
-		this.mesh = new Mesh( this.geometry, this.materials );
+
+		// Overwrite mesh (might already exist)
+		if ( this.mesh ) {
+			this.mesh.geometry = this.geometry;
+			this.mesh.geometry.needsUpdate = true;
+		}
+
 	}
 
 	generateFace( index, direction ) {
@@ -188,24 +211,39 @@ class Chunk {
 		const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
 		const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
 
-		// Assign material
-		if (
-			direction.equals( new Vector3( 1, 0, 0 ) ) ||
-			direction.equals( new Vector3( 0, 1, 0 ) ) ||
-			direction.equals( new Vector3( -1, 0, 0 ) ) ||
-			direction.equals( new Vector3( 0, -1, 0 ) )
-		) {
-			faceA.materialIndex = 0;
-			faceB.materialIndex = 0;
-		}
+		faceA.voxelPosition = this.getBlockLocation( index ).add( this.position );
+		faceB.voxelPosition = this.getBlockLocation( index ).add( this.position );
 
-		if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
-			faceA.materialIndex = 1;
-			faceB.materialIndex = 1;
-		}
-		if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
-			faceA.materialIndex = 2;
-			faceB.materialIndex = 2;
+		// Assign material
+		switch( this.blockIndices[ index ] ) {
+			// Grass
+			case 1:
+				if (
+					direction.equals( new Vector3( 1, 0, 0 ) ) ||
+					direction.equals( new Vector3( 0, 1, 0 ) ) ||
+					direction.equals( new Vector3( -1, 0, 0 ) ) ||
+					direction.equals( new Vector3( 0, -1, 0 ) )
+				) {
+					faceA.materialIndex = 0;
+					faceB.materialIndex = 0;
+				}
+
+				if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
+					faceA.materialIndex = 1;
+					faceB.materialIndex = 1;
+				}
+				if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
+					faceA.materialIndex = 2;
+					faceB.materialIndex = 2;
+				}
+				break;
+			case 2:
+				faceA.materialIndex = 3;
+				faceB.materialIndex = 3;
+				break;
+			default:
+				faceA.materialIndex = 3;
+				faceB.materialIndex = 3;
 		}
 
 		// Add the face to the geometry's faces array
@@ -230,8 +268,8 @@ class Chunk {
 	 * @param {Number} i
 	 * @param {Number} value
 	 */
-	updateMesh( i, value ) {
-		console.log( i, value );
+	setVoxelData( i, value ) {
+		this.blockIndices[ i ] = value;
 	}
 }
 
