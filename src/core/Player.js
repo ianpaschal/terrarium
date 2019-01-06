@@ -5,15 +5,13 @@ import {
 	Object3D,
 	Vector2,
 	Vector3,
-	Raycaster,
-	BoxGeometry,
-	Mesh,
-	MeshLambertMaterial
+	Raycaster
 } from "three";
 import PointerLockControls from "../controls/PointerLockControls";
 import KeyboardControls from "../controls/KeyboardControls";
 import VoxelCursor from "../controls/VoxelCursor";
 import scene from "../scene";
+import engine from "../engine";
 
 class Player {
 
@@ -21,16 +19,17 @@ class Player {
 		this.model = new Object3D();
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
-		this.camera = camera;
+
 		camera.up.set( 0, 0, 1 );
-		this.camera.rotation.set( Math.PI / 2, 0, 0 );
+		camera.rotation.set( Math.PI / 2, 0, 0 );
+		this.camera = camera;
+
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
 		this.model.position.z = 10;
 		this.model.add( this.pitchObject );
 		this.AABB = new Box3();
 
-		this.mouse = new Vector2( 0, 0 );
 		this.raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
 		this.cursor = new VoxelCursor();
 		scene.add( this.cursor );
@@ -43,32 +42,25 @@ class Player {
 		this.mouseControls.addHandler( "move", ( pitch, yaw ) => {
 			this.model.rotation.z = yaw;
 			this.pitchObject.rotation.x = pitch;
-
-			// Mouse picking
-			this.raycaster.setFromCamera( this.mouse, camera );
-			const intersects = this.raycaster.intersectObject( this.terrain, true );
-			if ( intersects[ 0 ] ) {
-				this.cursor.position.copy( intersects[ 0 ].face.voxelPosition );
-				this.cursor.direction.copy( intersects[ 0 ].face.normal );
-			}
+			this.updateCursor();
 		});
 		this.mouseControls.addHandler( 0, () => {
-			console.log( "Left clicked!" );
+			if ( this.cursor.visible ) {
+				engine.getSystem( "terrain-generation" ).dispatch( "setVoxel", {
+					position: this.cursor.position.clone(),
+					value: 0
+				});
+			}
+			this.updateCursor();
 		});
 		this.mouseControls.addHandler( 2, () => {
-			console.log( "Right clicked!" );
-
-			// Create a new block
-
-			const geometry = new BoxGeometry( 1, 1, 1 );
-			const material = new MeshLambertMaterial( 0xffff00 );
-			const voxel = new Mesh( geometry, material );
-			voxel.position.set(
-				this.cursor.position.x + 0.5 + this.cursor.direction.x,
-				this.cursor.position.y + 0.5 + this.cursor.direction.y,
-				this.cursor.position.z + 0.5 + this.cursor.direction.z
-			);
-			scene.add( voxel );
+			if ( this.cursor.visible ) {
+				engine.getSystem( "terrain-generation" ).dispatch( "setVoxel", {
+					position: this.cursor.position.clone().add( this.cursor.direction ),
+					value: 2
+				});
+			}
+			this.updateCursor();
 		});
 
 		// Assign handlers
@@ -203,8 +195,20 @@ class Player {
 		this.model.position = vector;
 	}
 
-	attachCursor( ) {
-		
+	updateCursor() {
+		this.mouse = new Vector2( 0, 0 );
+		this.raycaster.setFromCamera( this.mouse, this.camera );
+		const intersects = this.raycaster.intersectObject( this.terrain, true );
+
+		if ( intersects[ 0 ] ) {
+			if ( !this.cursor.visible ) {
+				this.cursor.visible = true;
+			}
+			this.cursor.position.copy( intersects[ 0 ].face.voxelPosition );
+			this.cursor.direction.copy( intersects[ 0 ].face.normal );
+		} else {
+			this.cursor.visible = false;
+		}
 	}
 }
 export default Player;

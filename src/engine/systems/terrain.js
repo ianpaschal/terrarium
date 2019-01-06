@@ -14,6 +14,33 @@ export default new System({
 	componentTypes: [
 		"chunk"
 	],
+	methods: {
+		setVoxel( data ) {
+			const { position, value } = data;
+
+			// Get correct chunk for position
+			const chunkPosition = new Vector3(
+				Math.floor( position.x / 16 ) * 16,
+				Math.floor( position.y / 16 ) * 16,
+				Math.floor( position.z / 16 ) * 16
+			);
+
+			const chunk = this.chunks.find( ( element ) => {
+				return element.position.equals( chunkPosition );
+			});
+
+			// Get index for voxel in that position
+			const i = chunk.getBlockIndex( new Vector3(
+				position.x - chunkPosition.x,
+				position.y - chunkPosition.y,
+				position.z - chunkPosition.z
+			) );
+
+			// Modify that chunk at that index (automatically regenerates mesh)
+			chunk.setVoxelData( i, value );
+			chunk.generateGeometry();
+		}
+	},
 	onInit() {
 
 		this.generator = new SimplexNoise();
@@ -54,8 +81,7 @@ export default new System({
 				const chunk = new Chunk( chunkPosition, chunkData );
 				chunk.mesh.position.copy( chunkPosition );
 				terrain.add( chunk.mesh );
-				// this._engine.chunks.push( chunk );
-				// this._engine.chunkMeshes.push( chunk.mesh );
+				this.chunks.push( chunk );
 			}
 		}
 		scene.add( terrain );
