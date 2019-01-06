@@ -12,6 +12,4 @@ engine.addSystem( movementSystem );
 engine.addSystem( daylightSystem );
 engine.addSystem( terrainSystem );
 
-console.log( engine.systems );
-
 export default engine;

@@ -2,13 +2,14 @@
   "name": "terrarium",
   "version": "1.0.0",
   "description": "A JavaScript clone of Minecraft with some improvements (I think).",
-  "main": "./dist/main.js",
+  "main": "src/main.js",
   "scripts": {
     "lint": "eslint --fix src/**",
     "test": "",
-    "dev": "NODE_ENV=development webpack --watch --config webpack/dev.config.js",
+    "bundle": "parcel build src/index.html --out-dir dist --public-url ./",
+    "prestart": "npm run bundle",
     "start": "electron .",
-    "prebuild": "NODE_ENV=production webpack --config webpack/prod.config.js",
+    "prebuild": "npm run bundle",
     "build": "electron-builder"
   },
   "repository": {
@@ -26,23 +27,9 @@
     "simplex-noise": "^2.4.0",
     "three": "^0.94.0",
     "three-orbit-controls": "^82.1.0",
-    "uuid": "^3.2.1",
-    "vue": "^2.5.16",
-    "vuex": "^3.0.0"
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^8.2.3",
-    "babel-jest": "^23.4.0",
-    "babel-loader": "^7.1.5",
-    "babel-plugin-root-import": "^6.1.0",
-    "babel-plugin-syntax-jsx": "^6.18.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-plugin-transform-vue-jsx": "^3.7.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-stage-3": "^6.24.1",
-    "cross-env": "^5.2.0",
-    "css-loader": "^0.25.0",
     "electron": "^2.0.8",
     "electron-builder": "^19.56.2",
     "electron-reload": "^1.0.2",
@@ -50,17 +37,6 @@
     "eslint-plugin-html": "^4.0.3",
     "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-vue": "^4.5.0",
-    "file-loader": "^0.9.0",
-    "jest": "^23.4.0",
-    "jest-vue-preprocessor": "^1.4.0",
-    "less": "^3.7.1",
-    "less-loader": "^4.1.0",
-    "uglifyjs-webpack-plugin": "^1.2.5",
-    "vue-loader": "^14.2.2",
-    "vue-template-compiler": "^2.5.16",
-    "webpack": "^2.1.0-beta.22",
-    "webpack-cli": "^3.0.8",
-    "webpack-dev-server": "^3.1.14",
-    "webpack-merge": "^4.1.2"
+    "parcel-bundler": "^1.11.0"
   }
 }

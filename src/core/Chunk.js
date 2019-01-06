@@ -78,13 +78,13 @@ class Chunk {
 		this.materials = [];
 		const loader = new TextureLoader();
 
-		const grassSide = loader.load( "resources/textures/grass_side.png" );
+		const grassSide = loader.load( "../resources/textures/grass_side.png" );
 		grassSide.magFilter = NearestFilter;
 		grassSide.minFilter = LinearMipMapLinearFilter;
-		const grassTop = loader.load( "resources/textures/grass_top.png" );
+		const grassTop = loader.load( "../resources/textures/grass_top.png" );
 		grassTop.magFilter = NearestFilter;
 		grassTop.minFilter = LinearMipMapLinearFilter;
-		const dirt = loader.load( "resources/textures/dirt.png" );
+		const dirt = loader.load( "../resources/textures/dirt.png" );
 		dirt.magFilter = NearestFilter;
 		dirt.minFilter = LinearMipMapLinearFilter;
 		this.materials.push(

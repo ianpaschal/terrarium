@@ -58,7 +58,6 @@ export default new System({
 				// this._engine.chunkMeshes.push( chunk.mesh );
 			}
 		}
-		console.log( terrain );
 		scene.add( terrain );
 	},
 	onAddEntity() {

@@ -13,13 +13,11 @@ export default new System({
 		// Do nothing for now
 	},
 	onUpdate( t ) {
-		// console.log( "updating movement" );
+
 		// Use s instead of ms
 		t = t / 1000;
 
 		const { normalInput, position, velocity } = this._engine.player;
-
-		// console.log( position );
 
 		const aPlayer = 100; // m/s^2
 		const aFriction = -5; // m/s^2
