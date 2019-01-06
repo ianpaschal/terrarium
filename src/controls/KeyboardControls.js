@@ -10,7 +10,6 @@ class KeyboardControls {
 		document.addEventListener( "keyup", _handle.bind( this ), false );
 
 		function _handle( e ) {
-			console.log( e.which );
 			if ( this.handlers[ e.keyCode ] ) {
 				if ( e.type === "keydown" ) {
 					this.pressed[ e.keyCode ] = true;

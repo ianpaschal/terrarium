@@ -13,7 +13,7 @@ function init() {
 	camera = new PerspectiveCamera(
 		75, window.innerWidth / window.innerHeight, 0.01, 1000
 	);
-	engine.player = new Player( camera ); // TODO: Attach separately
+	engine.player = new Player( camera, engine.scene ); // TODO: Attach separately
 	engine.player.getModel().position.set( -8, -8, 1 );
 
 	engine.scene.add( engine.player.getModel() );

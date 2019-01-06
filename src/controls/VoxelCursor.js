@@ -43,6 +43,7 @@ class VoxelCursor {
 			new LineBasicMaterial( 0xffffff )
 		);
 		this.cursor.name = "cursor";
+		this.cursor.direction = new Vector3();
 
 		return this.cursor;
 	}

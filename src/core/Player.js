@@ -1,17 +1,27 @@
 // Terrarium is distributed under the MIT license.
 
-import { Box3, Object3D, Vector2, Vector3, Raycaster } from "three";
+import {
+	Box3,
+	Object3D,
+	Vector2,
+	Vector3,
+	Raycaster,
+	BoxGeometry,
+	Mesh,
+	MeshLambertMaterial
+} from "three";
 import PointerLockControls from "../controls/PointerLockControls";
 import KeyboardControls from "../controls/KeyboardControls";
 import VoxelCursor from "../controls/VoxelCursor";
 
 class Player {
 
-	constructor( camera ) {
+	constructor( camera, scene ) {
 		this.model = new Object3D();
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
 		this.camera = camera;
+		this.scene = scene;
 		camera.up.set( 0, 0, 1 );
 		this.camera.rotation.set( Math.PI / 2, 0, 0 );
 		this.pitchObject = new Object3D();
@@ -30,12 +40,32 @@ class Player {
 		this.mouseControls.addHandler( "move", ( pitch, yaw ) => {
 			this.model.rotation.z = yaw;
 			this.pitchObject.rotation.x = pitch;
+
+			// Mouse picking
+			this.raycaster.setFromCamera( this.mouse, camera );
+			const intersects = this.raycaster.intersectObject( this.terrain, true );
+			if ( intersects[ 0 ] ) {
+				this.cursor.position.copy( intersects[ 0 ].face.voxelPosition );
+				this.cursor.direction.copy( intersects[ 0 ].face.normal );
+			}
 		});
 		this.mouseControls.addHandler( 0, () => {
 			console.log( "Left clicked!" );
 		});
 		this.mouseControls.addHandler( 2, () => {
 			console.log( "Right clicked!" );
+
+			// Create a new block
+
+			const geometry = new BoxGeometry( 1, 1, 1 );
+			const material = new MeshLambertMaterial( 0xffff00 );
+			const voxel = new Mesh( geometry, material );
+			voxel.position.set(
+				this.cursor.position.x + 0.5 + this.cursor.direction.x,
+				this.cursor.position.y + 0.5 + this.cursor.direction.y,
+				this.cursor.position.z + 0.5 + this.cursor.direction.z
+			);
+			this.scene.add( voxel );
 		});
 
 		// Assign handlers
@@ -172,11 +202,8 @@ class Player {
 
 	attachCursor( scene ) {
 		this.cursor = new VoxelCursor();
-
 		scene.add( this.cursor );
-
 		this.terrain = scene.getObjectByName( "terrain", true );
-		
 	}
 }
 export default Player;
