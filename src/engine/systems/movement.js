@@ -1,59 +1,68 @@
 // Terrarium is distributed under the MIT license.
 
-import { Box3, Vector3, Raycaster } from "three";
-import SystemLite from "../SystemLite";
+import { System } from "aurora";
 
-const init = function() {
-	// Do nothing for now
-};
+export default new System({
+	name: "movement",
+	fixed: false,
+	step: 500,
+	componentTypes: [
+		"player"
+	],
+	onInit() {
+		// Do nothing for now
+	},
+	onUpdate( t ) {
+		// console.log( "updating movement" );
+		// Use s instead of ms
+		t = t / 1000;
 
-const update = function( t ) {
+		const { normalInput, position, velocity } = this._engine.player;
 
-	// Use s instead of ms
-	t = t / 1000;
+		// console.log( position );
 
-	const { normalInput, position, velocity } = this._engine.player;
+		const aPlayer = 100; // m/s^2
+		const aFriction = -5; // m/s^2
+		// const aGravity = -9.8; // m/s^2
 
-	const aPlayer = 100; // m/s^2
-	const aFriction = -5; // m/s^2
-	// const aGravity = -9.8; // m/s^2
+		// Apply dampening acceleration change over time to velocity
+		velocity.add( velocity.clone().multiplyScalar( aFriction * t ) );
 
-	// Apply dampening acceleration change over time to velocity
-	velocity.add( velocity.clone().multiplyScalar( aFriction * t ) );
+		// Apply player input acceleration change over time to velocity
+		velocity.add( normalInput.multiplyScalar( aPlayer * t ) );
 
-	// Apply player input acceleration change over time to velocity
-	velocity.add( normalInput.multiplyScalar( aPlayer * t ) );
+		// Apply velocity change over time to position
+		position.add( velocity.clone().multiplyScalar( t ) );
+	}
+});
 
-	// Apply velocity change over time to position
-	position.add( velocity.clone().multiplyScalar( t ) );
+// // If touching the ground, apply movement; if not, apply gravity
+// if ( this._engine.player.collisions.z ) {
+// 	model.velocity.x -= model.velocity.x * 10 * t; // Ground friction
+// 	model.velocity.y -= model.velocity.y * 10 * t;
+// 	model.velocity.x += horizontalMovement.x * playerSpeed * t;
+// 	model.velocity.y += horizontalMovement.y * playerSpeed * t;
+// } else {
+// 	model.velocity.x -= model.velocity.x * 1 * t; // Air friction
+// 	model.velocity.y -= model.velocity.y * 1 * t;
+// 	model.velocity.z -= 9.8 * t;
+// }
 
-	// // If touching the ground, apply movement; if not, apply gravity
-	// if ( this._engine.player.collisions.z ) {
-	// 	model.velocity.x -= model.velocity.x * 10 * t; // Ground friction
-	// 	model.velocity.y -= model.velocity.y * 10 * t;
-	// 	model.velocity.x += horizontalMovement.x * playerSpeed * t;
-	// 	model.velocity.y += horizontalMovement.y * playerSpeed * t;
-	// } else {
-	// 	model.velocity.x -= model.velocity.x * 1 * t; // Air friction
-	// 	model.velocity.y -= model.velocity.y * 1 * t;
-	// 	model.velocity.z -= 9.8 * t;
-	// }
+// // Get intended movement and compute collisions
+// const movement = model.velocity.clone().multiplyScalar( t );
+// this._engine.player.collisions = findCollisions(
+// 	model,
+// 	this._engine.scene,
+// 	movement
+// );
+// const constrained = constrainMotion(
+// 	this._engine.player.collisions,
+// 	movement
+// );
 
-	// // Get intended movement and compute collisions
-	// const movement = model.velocity.clone().multiplyScalar( t );
-	// this._engine.player.collisions = findCollisions(
-	// 	model,
-	// 	this._engine.scene,
-	// 	movement
-	// );
-	// const constrained = constrainMotion(
-	// 	this._engine.player.collisions,
-	// 	movement
-	// );
-
-	// // Convert to constrained movement and apply to the player position
-	// model.position.add( constrained );
-};
+// // Convert to constrained movement and apply to the player position
+// model.position.add( constrained );
+// };
 
 // function findCollisions( model, scene, distance ) {
 // 	const AABB = new Box3();
@@ -168,4 +177,4 @@ const update = function( t ) {
 // 	return result;
 // }
 
-export default new SystemLite( init, update );
+// export default new System( init, update );

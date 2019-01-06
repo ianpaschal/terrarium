@@ -13,15 +13,15 @@ import {
 import PointerLockControls from "../controls/PointerLockControls";
 import KeyboardControls from "../controls/KeyboardControls";
 import VoxelCursor from "../controls/VoxelCursor";
+import scene from "../scene";
 
 class Player {
 
-	constructor( camera, scene ) {
+	constructor( camera ) {
 		this.model = new Object3D();
 		this.model.velocity = new Vector3();
 		this.model.acceleration = new Vector3();
 		this.camera = camera;
-		this.scene = scene;
 		camera.up.set( 0, 0, 1 );
 		this.camera.rotation.set( Math.PI / 2, 0, 0 );
 		this.pitchObject = new Object3D();
@@ -32,6 +32,9 @@ class Player {
 
 		this.mouse = new Vector2( 0, 0 );
 		this.raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
+		this.cursor = new VoxelCursor();
+		scene.add( this.cursor );
+		this.terrain = scene.getObjectByName( "terrain", true );
 
 		this.mode = 0;
 
@@ -65,7 +68,7 @@ class Player {
 				this.cursor.position.y + 0.5 + this.cursor.direction.y,
 				this.cursor.position.z + 0.5 + this.cursor.direction.z
 			);
-			this.scene.add( voxel );
+			scene.add( voxel );
 		});
 
 		// Assign handlers
@@ -200,10 +203,8 @@ class Player {
 		this.model.position = vector;
 	}
 
-	attachCursor( scene ) {
-		this.cursor = new VoxelCursor();
-		scene.add( this.cursor );
-		this.terrain = scene.getObjectByName( "terrain", true );
+	attachCursor( ) {
+		
 	}
 }
 export default Player;

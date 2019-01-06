@@ -3,6 +3,7 @@
 import { PerspectiveCamera, WebGLRenderer } from "three";
 import Player from "./core/Player";
 import engine from "./engine";
+import scene from "./scene";
 
 let camera;
 let renderer;
@@ -13,12 +14,12 @@ function init() {
 	camera = new PerspectiveCamera(
 		75, window.innerWidth / window.innerHeight, 0.01, 1000
 	);
-	engine.player = new Player( camera, engine.scene ); // TODO: Attach separately
+
+	// Hack until entities are worked out
+	engine.player = new Player( camera ); // TODO: Attach separately
 	engine.player.getModel().position.set( -8, -8, 1 );
 
-	engine.scene.add( engine.player.getModel() );
-
-	engine.player.attachCursor( engine.scene );
+	scene.add( engine.player.getModel() );
 
 	renderer = new WebGLRenderer({
 		antialias: false
@@ -29,6 +30,8 @@ function init() {
 	renderer.setClearColor( 0xFFFFFF );
 	document.body.appendChild( renderer.domElement );
 	window.addEventListener( "resize", onWindowResize, false );
+
+	engine.start();
 }
 
 function onWindowResize() {
@@ -44,13 +47,11 @@ function animate() {
 		const time = performance.now();
 		const delta = ( time - prevTime );
 		prevTime = time;
-
-		// Update all systems
-		engine.update( delta );
+		engine.tick();
 	}
 
 	// Render
-	renderer.render( engine.scene, camera );
+	renderer.render( scene, camera );
 	requestAnimationFrame( animate );
 }
 
