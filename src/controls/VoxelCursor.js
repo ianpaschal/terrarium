@@ -4,37 +4,37 @@ class VoxelCursor {
 	constructor() {
 		// Cursor lines:
 		const segments = [
-			new Vector3( 0, 0, 0 ), new Vector3( 0.125, 0, 0 ),
-			new Vector3( 0, 0, 0 ), new Vector3( 0, 0.125, 0 ),
-			new Vector3( 0, 0, 0 ), new Vector3( 0, 0, 0.125 ),
+			new Vector3( -0.01, -0.01, -0.01 ), new Vector3( 0.125, -0.01, -0.01 ),
+			new Vector3( -0.01, -0.01, -0.01 ), new Vector3( -0.01, 0.125, -0.01 ),
+			new Vector3( -0.01, -0.01, -0.01 ), new Vector3( -0.01, -0.01, 0.125 ),
 
-			new Vector3( 1, 0, 0 ), new Vector3( 0.875, 0, 0 ),
-			new Vector3( 1, 0, 0 ), new Vector3( 1, 0.125, 0 ),
-			new Vector3( 1, 0, 0 ), new Vector3( 1, 0, 0.125 ),
+			new Vector3( 1.01, -0.01, -0.01 ), new Vector3( 0.875, -0.01, -0.01 ),
+			new Vector3( 1.01, -0.01, -0.01 ), new Vector3( 1.01, 0.125, -0.01 ),
+			new Vector3( 1.01, -0.01, -0.01 ), new Vector3( 1.01, -0.01, 0.125 ),
 
-			new Vector3( 0, 1, 0 ), new Vector3( 0.125, 1, 0 ),
-			new Vector3( 0, 1, 0 ), new Vector3( 0, 0.875, 0 ),
-			new Vector3( 0, 1, 0 ), new Vector3( 0, 1, 0.125 ),
+			new Vector3( -0.01, 1.01, -0.01 ), new Vector3( 0.125, 1.01, -0.01 ),
+			new Vector3( -0.01, 1.01, -0.01 ), new Vector3( -0.01, 0.875, -0.01 ),
+			new Vector3( -0.01, 1.01, -0.01 ), new Vector3( -0.01, 1.01, 0.125 ),
 
-			new Vector3( 1, 1, 0 ), new Vector3( 0.875, 1, 0 ),
-			new Vector3( 1, 1, 0 ), new Vector3( 1, 0.875, 0 ),
-			new Vector3( 1, 1, 0 ), new Vector3( 1, 1, 0.125 ),
+			new Vector3( 1.01, 1.01, -0.01 ), new Vector3( 0.875, 1.01, -0.01 ),
+			new Vector3( 1.01, 1.01, -0.01 ), new Vector3( 1.01, 0.875, -0.01 ),
+			new Vector3( 1.01, 1.01, -0.01 ), new Vector3( 1.01, 1.01, 0.125 ),
 
-			new Vector3( 0, 0, 1 ), new Vector3( 0.125, 0, 1 ),
-			new Vector3( 0, 0, 1 ), new Vector3( 0, 0.125, 1 ),
-			new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0.875 ),
+			new Vector3( -0.01, -0.01, 1.01 ), new Vector3( 0.125, -0.01, 1.01 ),
+			new Vector3( -0.01, -0.01, 1.01 ), new Vector3( -0.01, 0.125, 1.01 ),
+			new Vector3( -0.01, -0.01, 1.01 ), new Vector3( -0.01, -0.01, 0.875 ),
 
-			new Vector3( 1, 0, 1 ), new Vector3( 0.875, 0, 1 ),
-			new Vector3( 1, 0, 1 ), new Vector3( 1, 0.125, 1 ),
-			new Vector3( 1, 0, 1 ), new Vector3( 1, 0, 0.875 ),
+			new Vector3( 1.01, -0.01, 1.01 ), new Vector3( 0.875, -0.01, 1.01 ),
+			new Vector3( 1.01, -0.01, 1.01 ), new Vector3( 1.01, 0.125, 1.01 ),
+			new Vector3( 1.01, -0.01, 1.01 ), new Vector3( 1.01, -0.01, 0.875 ),
 
-			new Vector3( 0, 1, 1 ), new Vector3( 0.125, 1, 1 ),
-			new Vector3( 0, 1, 1 ), new Vector3( 0, 0.875, 1 ),
-			new Vector3( 0, 1, 1 ), new Vector3( 0, 1, 0.875 ),
+			new Vector3( -0.01, 1, 1 ), new Vector3( 0.125, 1.01, 1.01 ),
+			new Vector3( -0.01, 1, 1 ), new Vector3( -0.01, 0.875, 1.01 ),
+			new Vector3( -0.01, 1, 1 ), new Vector3( -0.01, 1.01, 0.875 ),
 
-			new Vector3( 1, 1, 1 ), new Vector3( 0.875, 1, 1 ),
-			new Vector3( 1, 1, 1 ), new Vector3( 1, 0.875, 1 ),
-			new Vector3( 1, 1, 1 ), new Vector3( 1, 1, 0.875 )
+			new Vector3( 1.01, 1.01, 1.01 ), new Vector3( 0.875, 1.01, 1.01 ),
+			new Vector3( 1.01, 1.01, 1.01 ), new Vector3( 1.01, 0.875, 1.01 ),
+			new Vector3( 1.01, 1.01, 1.01 ), new Vector3( 1.01, 1.01, 0.875 )
 		];
 		const cursorGeometry = new Geometry();
 		cursorGeometry.vertices = segments;
