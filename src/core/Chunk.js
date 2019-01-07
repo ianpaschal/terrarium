@@ -116,14 +116,16 @@ class Chunk {
 	 * Regenerate the chunk mesh (destroys existing and replaces).
 	 */
 	generateGeometry() {
+
+		// Create an empty buffer geometry
 		this.geometry = new Geometry();
 
 		/*
 			This is a more efficient way to generating chunk geometry. Originally,
 			every single block was checked on all six sides, meaning the negative
 			direction had already been checked. For this reason, we check only the
-			blocks at x+1, y+1, and z+1. The exception is if x, y, or z are 0, a
-			negative face must be formed.
+			blocks at x+1, y+1, and z+1. The exception is for edge blocks which must
+			check adjacent chunks.
 		*/
 
 		// Use these for some DRY-loops
@@ -154,6 +156,8 @@ class Chunk {
 
 				// Perform logic checking if neighbor is solid or not
 				const j = this.getBlockIndex( checkLocation );
+
+				// If this block is solid and the neighbor is air, generate a face
 				if ( this.blockIndices[ i ] !== 0 ) {
 					if ( this.blockIndices[ j ] === 0 ) {
 						// Generate a face for that axis with positive normals
@@ -162,6 +166,7 @@ class Chunk {
 						this.generateFace( i, direction );
 					}
 				} else {
+					// Otherwise this block must be air, so check if the neigborh is solid
 					if ( this.blockIndices[ j ] !== 0 ) {
 						// Generate a face for that axis with negative normals
 						this.generateFace( j, direction.clone().negate() );
@@ -194,15 +199,19 @@ class Chunk {
 		*/
 
 		// NEW CODE
-		const vectors = computeVectors( p, direction );
+		const corners = computeVectors( p, direction );
 
 		const indices = [];
-		vectors.forEach( ( vector ) => {
-			const index = findIndexByVector( this.geometry, vector );
+
+		// Try to re-use existing vectors. If a vector with the right position
+		// is found, use that, otherwise push the vector to the geometry and
+		// use its index for the face
+		corners.forEach( ( triplet ) => {
+			const index = findIndexByVector( this.geometry, triplet );
 			if ( index >= 0 ) {
 				indices.push( index );
 			} else {
-				const length = this.geometry.vertices.push( vector );
+				const length = this.geometry.vertices.push( triplet );
 				indices.push( length - 1 );
 			}
 		});
@@ -322,70 +331,72 @@ function findIndexByVector( geometry, location ) {
  * @param {*} d
  */
 function computeVectors( p, d ) {
+
+	// Since chunks use buffer geometry, so vectors should be an array of 12 floats
 	const vectors = [];
 
 	// "East"
-	if ( d.equals( new Vector3( 1, 0, 0 ) ) ) {
+	if ( d.x === 1 ) {
 		vectors.push(
-			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
-			new Vector3( p.x + 1, p.y,     p.z + 1 ),
-			new Vector3( p.x + 1, p.y,     p.z     ),
-			new Vector3( p.x + 1, p.y + 1, p.z     )
+			p.x + 1, p.y + 1, p.z + 1,
+			p.x + 1, p.y,     p.z + 1,
+			p.x + 1, p.y,     p.z,
+			p.x + 1, p.y + 1, p.z
 		);
 		return vectors;
 	}
 
 	// "North"
-	if ( d.equals( new Vector3( 0, 1, 0 ) ) ) {
+	if ( d.y === 1 ) {
 		vectors.push(
-			new Vector3( p.x,     p.y + 1, p.z + 1 ),
-			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
-			new Vector3( p.x + 1, p.y + 1, p.z     ),
-			new Vector3( p.x,     p.y + 1, p.z     )
+			p.x,     p.y + 1, p.z + 1,
+			p.x + 1, p.y + 1, p.z + 1,
+			p.x + 1, p.y + 1, p.z,
+			p.x,     p.y + 1, p.z
 		);
 		return vectors;
 	}
 
 	// "Up"
-	if ( d.equals( new Vector3( 0, 0, 1 ) ) ) {
+	if ( d.z === 1 ) {
 		vectors.push(
-			new Vector3( p.x + 1, p.y + 1, p.z + 1 ),
-			new Vector3( p.x,     p.y + 1, p.z + 1 ),
-			new Vector3( p.x,     p.y,     p.z + 1 ),
-			new Vector3( p.x + 1, p.y,     p.z + 1 )
+			p.x + 1, p.y + 1, p.z + 1,
+			p.x,     p.y + 1, p.z + 1,
+			p.x,     p.y,     p.z + 1,
+			p.x + 1, p.y,     p.z + 1
 		);
 		return vectors;
 	}
 
 	// "West"
-	if ( d.equals( new Vector3( -1, 0, 0 ) ) ) {
+	if ( d.x === -1 ) {
 		vectors.push(
-			new Vector3( p.x,     p.y,     p.z + 1 ),
-			new Vector3( p.x,     p.y + 1, p.z + 1 ),
-			new Vector3( p.x,     p.y + 1, p.z     ),
-			new Vector3( p.x,     p.y,     p.z     )
+			p.x,     p.y,     p.z + 1,
+			p.x,     p.y + 1, p.z + 1,
+			p.x,     p.y + 1, p.z,
+			p.x,     p.y,     p.z
 		);
 		return vectors;
 	}
 
 	// "South"
-	if ( d.equals( new Vector3( 0, -1, 0 ) ) ) {
+	if ( d.y === -1 ) {
 		vectors.push(
-			new Vector3( p.x + 1, p.y,     p.z + 1 ),
-			new Vector3( p.x,     p.y,     p.z + 1 ),
-			new Vector3( p.x,     p.y,     p.z     ),
-			new Vector3( p.x + 1, p.y,     p.z     )
+			p.x + 1, p.y,     p.z + 1,
+			p.x,     p.y,     p.z + 1,
+			p.x,     p.y,     p.z,
+			p.x + 1, p.y,     p.z
 		);
 		return vectors;
 	}
 
 	// "Bottom"
-	if ( d.equals( new Vector3( 0, 0, -1 ) ) ) {
+	if ( d.z === -1 ) {
 		vectors.push(
-			new Vector3( p.x,     p.y,     p.z     ),
-			new Vector3( p.x,     p.y + 1, p.z     ),
-			new Vector3( p.x + 1, p.y + 1, p.z     ),
-			new Vector3( p.x + 1, p.y,     p.z     )
+			p.x,     p.y,     p.z,
+			p.x,     p.y + 1, p.z,
+			p.x + 1, p.y + 1, p.z,
+			p.x + 1, p.y,     p.z
 		);
 		return vectors;
 	}
