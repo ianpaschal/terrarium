@@ -1,10 +1,18 @@
 // Terrarium is distributed under the MIT license.
 
 import {
-	Box3, Face3, Geometry, Mesh, MeshLambertMaterial,
+	Box3,
+	BufferGeometry,
+	Face3,
+	Float32BufferAttribute,
+	LinearMipMapLinearFilter,
+	Mesh,
+	MeshLambertMaterial,
+	MeshNormalMaterial,
+	NearestFilter,
+	TextureLoader,
 	Vector2,
-	Vector3, TextureLoader, NearestFilter,
-	LinearMipMapLinearFilter
+	Vector3,
 } from "three";
 
 // Globals
@@ -50,7 +58,7 @@ class Chunk {
 
 		// this.mesh = new Object3D();
 		this.geometry = this.generateGeometry();
-		this.mesh = new Mesh( this.geometry, GLOBAL_MATERIALS );
+		this.mesh = new Mesh( this.geometry, new MeshNormalMaterial() );
 	}
 
 	/**
@@ -98,8 +106,9 @@ class Chunk {
 	 */
 	generateGeometry() {
 
-		// Create an empty buffer geometry
-		this.geometry = new Geometry();
+		let vertices = [];
+		const normals = [];
+		const faceIndices = [];
 
 		/*
 			This is a more efficient way to generating chunk geometry. Originally,
@@ -109,34 +118,78 @@ class Chunk {
 			check adjacent chunks.
 		*/
 
+		// This is a helper function for generating faces on the buffer geometry
+		// It pushes stuff to the arrays defined at the beginning of generateGeometry()
+		function addFaceToGeometry( location, direction ) {
+
+			/*
+			Create them counter-clockwise (normal wrapping order)
+			A, B, C and A, C, D
+			B ----- A
+			|    /  |
+			|   /   |
+			|  /    |
+			C ----- D
+			*/
+
+			const corners = computeVertices( location, direction );
+
+			normals.push(
+				direction.x, direction.y, direction.z,
+				direction.x, direction.y, direction.z,
+				direction.x, direction.y, direction.z,
+				direction.x, direction.y, direction.z
+			);
+
+			vertices = vertices.concat( corners );
+
+			const a = vertices.length - 4;
+			const b = vertices.length - 3;
+			const c = vertices.length - 2;
+			const d = vertices.length - 1;
+
+			faceIndices.push( a, b, c );
+			faceIndices.push( a, c, d );
+
+		}
+
 		// Use these for some DRY-loops
 		const axes = [ "x", "y", "z" ];
+
+		// For each block in the chunk...
 		for ( let i = 0; i < BLOCK_COUNT; i++ ) {
+
+			// Get its location WITHIN the chunk
 			const location = this.getBlockLocation( i );
+
+			// For each neighbor (north, east, top)...
 			axes.forEach( ( axis ) => {
 
 				// Compute the neighbor location to check
 				const direction = new Vector3();
 				direction[ axis ] += 1;
+
 				const checkLocation = location.clone().add( direction );
 
+				const j = this.getBlockIndex( checkLocation );
+
+				// TODO: RENABLE LATER
 				// Must generate a face for east/north/top sides of the chunk
-				if ( location[ axis ] === CHUNK_SIZE - 1 ) {
-					if ( this.blockIndices[ i ] !== 0 ) {
-						// Generate a face for that axis with positive normals
-						this.generateFace( i, direction );
-					}
-					return;
-				}
+				// if ( location[ axis ] === CHUNK_SIZE - 1 ) {
+				// 	if ( this.blockIndices[ i ] !== 0 ) {
+				// 		// Generate a face for that axis with positive normals
+				// 		this.generateFace( i, direction );
+				// 	}
+				// 	return;
+				// }
 
 				// Must generate a face for west/south/bottom sides of the chunk
-				if ( location[ axis ] === 0 && this.blockIndices[ i ] !== 0 ) {
-					// Generate a face for that axis with negative normals
-					this.generateFace( i, direction.clone().negate() );
-				}
+				// if ( location[ axis ] === 0 && this.blockIndices[ i ] !== 0 ) {
+				// 	// Generate a face for that axis with negative normals
+				// 	this.generateFace( i, direction.clone().negate() );
+				// }
 
 				// Perform logic checking if neighbor is solid or not
-				const j = this.getBlockIndex( checkLocation );
 
 				// If this block is solid and the neighbor is air, generate a face
 				if ( this.blockIndices[ i ] !== 0 ) {
@@ -144,112 +197,35 @@ class Chunk {
 						// Generate a face for that axis with positive normals
 						// Use block i but since the coordinates of block i are on the neg
 						// corner (west/south/bottom)
-						this.generateFace( i, direction );
+						addFaceToGeometry( location, direction );
+						return;
 					}
 				} else {
 					// Otherwise this block must be air, so check if the neigborh is solid
+					direction.negate();
 					if ( this.blockIndices[ j ] !== 0 ) {
 						// Generate a face for that axis with negative normals
-						this.generateFace( j, direction.clone().negate() );
+						addFaceToGeometry( checkLocation, direction );
+						return;
 					}
 				}
 			});
 		}
 
+		// Create an empty buffer geometry
+		const geometry = new BufferGeometry();
+		geometry.setIndex( faceIndices );
+		geometry.addAttribute( "position", new Float32BufferAttribute( vertices, 3 ) );
+		geometry.addAttribute( "normal", new Float32BufferAttribute( normals, 3 ) );
+
+		console.log( geometry );
+
 		// Overwrite mesh (might already exist)
 		if ( this.mesh ) {
-			this.mesh.geometry = this.geometry;
+			this.mesh.geometry = geometry;
 			this.mesh.geometry.needsUpdate = true;
 		}
 
-	}
-
-	generateFace( index, direction ) {
-		const p = this.getBlockLocation( index );
-
-		// Create four vertices
-
-		/*
-			Create them counter-clockwise (normal wrapping order)
-			A, B, C; A, C, D
-			B ----- A
-			|    /  |
-			|   /   |
-			|  /    |
-			C ----- D
-		*/
-
-		// NEW CODE
-		const corners = computeVectors( p, direction );
-
-		const indices = [];
-
-		// Try to re-use existing vectors. If a vector with the right position
-		// is found, use that, otherwise push the vector to the geometry and
-		// use its index for the face
-		corners.forEach( ( triplet ) => {
-			const index = findIndexByVector( this.geometry, triplet );
-			if ( index >= 0 ) {
-				indices.push( index );
-			} else {
-				const length = this.geometry.vertices.push( triplet );
-				indices.push( length - 1 );
-			}
-		});
-
-		// Create the faces
-		const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
-		const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
-
-		faceA.voxelPosition = this.getBlockLocation( index ).add( this.position );
-		faceB.voxelPosition = this.getBlockLocation( index ).add( this.position );
-
-		// Assign material
-		switch( this.blockIndices[ index ] ) {
-			// Grass
-			case 1:
-				if (
-					direction.equals( new Vector3( 1, 0, 0 ) ) ||
-					direction.equals( new Vector3( 0, 1, 0 ) ) ||
-					direction.equals( new Vector3( -1, 0, 0 ) ) ||
-					direction.equals( new Vector3( 0, -1, 0 ) )
-				) {
-					faceA.materialIndex = 0;
-					faceB.materialIndex = 0;
-				}
-
-				if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
-					faceA.materialIndex = 1;
-					faceB.materialIndex = 1;
-				}
-				if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
-					faceA.materialIndex = 2;
-					faceB.materialIndex = 2;
-				}
-				break;
-			case 2:
-				faceA.materialIndex = 3;
-				faceB.materialIndex = 3;
-				break;
-			default:
-				faceA.materialIndex = 3;
-				faceB.materialIndex = 3;
-		}
-
-		// Add the face to the geometry's faces array
-		this.geometry.faces.push( faceA, faceB );
-		this.geometry.faceVertexUvs.push( [] );
-		this.geometry.faceVertexUvs[ 0 ].push( [
-			new Vector2( 0, 1 ),
-			new Vector2( 1, 1 ),
-			new Vector2( 1, 0 )
-		] );
-		this.geometry.faceVertexUvs[ 0 ].push( [
-			new Vector2( 0, 1 ),
-			new Vector2( 1, 0 ),
-			new Vector2( 0, 0 )
-		] );
-		this.geometry.computeFaceNormals();
 	}
 
 	/**
@@ -283,35 +259,35 @@ console.log( "y:", compY );
 console.log( "z:", compZ );
 */
 
+// /**
+//  *
+//  * @param {Geometry} geometry - The geometry to search through
+//  * @param {Vector3} location - The location to check
+//  * @returns {Number} - The index of the matching vertex
+//  */
+// function findIndexByVector( geometry, location ) {
+// 	let vertex;
+
+// 	// 'for' loop is used here for performance reasons
+// 	for ( let i = 0, length = geometry.vertices.length; i < length; i++ ) {
+// 		vertex = geometry.vertices[ i ];
+
+// 		// The Three.js .equals() method is simply a triple comparison for x,y,z
+// 		if ( vertex.equals( location ) ) {
+
+// 			// Return the index (we already know the location of that vertex anyway)
+// 			return geometry.vertices.indexOf( vertex );
+// 		}
+// 	}
+// 	return -1;
+// }
+
 /**
- *
- * @param {Geometry} geometry - The geometry to search through
- * @param {Vector3} location - The location to check
- * @returns {Number} - The index of the matching vertex
- */
-function findIndexByVector( geometry, location ) {
-	let vertex;
-
-	// 'for' loop is used here for performance reasons
-	for ( let i = 0, length = geometry.vertices.length; i < length; i++ ) {
-		vertex = geometry.vertices[ i ];
-
-		// The Three.js .equals() method is simply a triple comparison for x,y,z
-		if ( vertex.equals( location ) ) {
-
-			// Return the index (we already know the location of that vertex anyway)
-			return geometry.vertices.indexOf( vertex );
-		}
-	}
-	return -1;
-}
-
-/**
- * @description asdfasdf
+ * @description Compute vertices for a single face of a voxel
  * @param {*} p
  * @param {*} d
  */
-function computeVectors( p, d ) {
+function computeVertices( p, d ) {
 
 	// Since chunks use buffer geometry, so vectors should be an array of 12 floats
 	const vectors = [];
@@ -382,3 +358,94 @@ function computeVectors( p, d ) {
 		return vectors;
 	}
 }
+
+// /**
+//  * This extends a given geometry with new faces for a given voxel location and direction
+//  * @param {*} geometry - The geometry to copy and extend
+//  * @param {*} location
+//  * @param {*} direction
+//  * @returns {BufferGeometry} - The extended geometry
+//  */
+// function addFaceToGeometry( location, direction ) {
+
+// 	/*
+// 	Create them counter-clockwise (normal wrapping order)
+// 	A, B, C and A, C, D
+// 	B ----- A
+// 	|    /  |
+// 	|   /   |
+// 	|  /    |
+// 	C ----- D
+// 	*/
+
+// 	const corners = computeVertices( location, direction );
+
+// 	const indices = [];
+
+// 	// Try to re-use existing vectors. If a vector with the right position
+// 	// is found, use that, otherwise push the vector to the geometry and
+// 	// use its index for the face
+// 	corners.forEach( ( triplet ) => {
+// 		const index = findIndexByVector( geometry, triplet );
+// 		if ( index >= 0 ) {
+// 			indices.push( index );
+// 		} else {
+// 			const length = geometry.vertices.push( triplet );
+// 			indices.push( length - 1 );
+// 		}
+// 	});
+
+// 	// Create the faces
+// 	const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
+// 	const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
+
+// 	// faceA.voxelPosition = this.getBlockLocation( index ).add( this.position );
+// 	// faceB.voxelPosition = this.getBlockLocation( index ).add( this.position );
+
+// 	// // Assign material
+// 	// switch( this.blockIndices[ index ] ) {
+// 	// 	// Grass
+// 	// 	case 1:
+// 	// 		if (
+// 	// 			direction.equals( new Vector3( 1, 0, 0 ) ) ||
+// 	// 				direction.equals( new Vector3( 0, 1, 0 ) ) ||
+// 	// 				direction.equals( new Vector3( -1, 0, 0 ) ) ||
+// 	// 				direction.equals( new Vector3( 0, -1, 0 ) )
+// 	// 		) {
+// 	// 			faceA.materialIndex = 0;
+// 	// 			faceB.materialIndex = 0;
+// 	// 		}
+
+// 	// 		if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
+// 	// 			faceA.materialIndex = 1;
+// 	// 			faceB.materialIndex = 1;
+// 	// 		}
+// 	// 		if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
+// 	// 			faceA.materialIndex = 2;
+// 	// 			faceB.materialIndex = 2;
+// 	// 		}
+// 	// 		break;
+// 	// 	case 2:
+// 	// 		faceA.materialIndex = 3;
+// 	// 		faceB.materialIndex = 3;
+// 	// 		break;
+// 	// 	default:
+// 	// 		faceA.materialIndex = 3;
+// 	// 		faceB.materialIndex = 3;
+// 	// }
+
+// 	// Add the face to the geometry's faces array
+// 	this.geometry.faces.push( faceA, faceB );
+// 	this.geometry.faceVertexUvs.push( [] );
+// 	this.geometry.faceVertexUvs[ 0 ].push( [
+// 		new Vector2( 0, 1 ),
+// 		new Vector2( 1, 1 ),
+// 		new Vector2( 1, 0 )
+// 	] );
+// 	this.geometry.faceVertexUvs[ 0 ].push( [
+// 		new Vector2( 0, 1 ),
+// 		new Vector2( 1, 0 ),
+// 		new Vector2( 0, 0 )
+// 	] );
+// 	this.geometry.computeFaceNormals();
+// }
