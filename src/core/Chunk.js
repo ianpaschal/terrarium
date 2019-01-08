@@ -1,15 +1,36 @@
 // Terrarium is distributed under the MIT license.
 
-// Globals
-const CHUNK_SIZE = 16;
-const BLOCK_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
-
 import {
 	Box3, Face3, Geometry, Mesh, MeshLambertMaterial,
 	Vector2,
 	Vector3, TextureLoader, NearestFilter,
 	LinearMipMapLinearFilter
 } from "three";
+
+// Globals
+const CHUNK_SIZE = 16;
+const BLOCK_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
+
+const GLOBAL_MATERIALS = [];
+const LOADER = new TextureLoader();
+
+const TEXTURE_SOURCES = [
+	"../resources/textures/grass_side.png",
+	"../resources/textures/grass_top.png",
+	"../resources/textures/dirt.png",
+	"../resources/textures/cobble_stone.png"
+];
+
+TEXTURE_SOURCES.forEach( ( file ) => {
+	const texture = LOADER.load( file );
+	texture.magFilter = NearestFilter;
+	texture.minFilter = LinearMipMapLinearFilter;
+	GLOBAL_MATERIALS.push( new MeshLambertMaterial({
+		color: 0xFFFFFF,
+		map: texture
+	}) );
+});
+
 class Chunk {
 
 	constructor( position, blockIndices ) {
@@ -28,9 +49,8 @@ class Chunk {
 		) );
 
 		// this.mesh = new Object3D();
-		this.generateGeometry();
-		this.generateMaterials();
-		this.mesh = new Mesh( this.geometry, this.materials );
+		this.geometry = this.generateGeometry();
+		this.mesh = new Mesh( this.geometry, GLOBAL_MATERIALS );
 	}
 
 	/**
@@ -71,45 +91,6 @@ class Chunk {
 		return this.geometry.vertices.find( ( vertex ) => {
 			return vertex.equals( vector );
 		});
-	}
-
-	generateMaterials() {
-		this.materials = [];
-		const loader = new TextureLoader();
-
-		const grassSide = loader.load( "../resources/textures/grass_side.png" );
-		grassSide.magFilter = NearestFilter;
-		grassSide.minFilter = LinearMipMapLinearFilter;
-		const grassTop = loader.load( "../resources/textures/grass_top.png" );
-		grassTop.magFilter = NearestFilter;
-		grassTop.minFilter = LinearMipMapLinearFilter;
-		const dirt = loader.load( "../resources/textures/dirt.png" );
-		dirt.magFilter = NearestFilter;
-		dirt.minFilter = LinearMipMapLinearFilter;
-		const cobbleStone = loader.load( "../resources/textures/cobble_stone.png" );
-		cobbleStone.magFilter = NearestFilter;
-		cobbleStone.minFilter = LinearMipMapLinearFilter;
-		this.materials.push(
-			new MeshLambertMaterial({
-				color: 0xFFFFFF,
-				map: grassSide
-			}),
-			new MeshLambertMaterial({
-				color: 0xFFFFFF,
-				map: grassTop
-			}),
-			new MeshLambertMaterial({
-				color: 0xFFFFFF,
-				map: dirt
-			}),
-			new MeshLambertMaterial({
-				color: 0xFFFFFF,
-				map: cobbleStone
-			})
-		);
-		if ( this.mesh ) {
-			this.mesh.materials = this.materials;
-		}
 	}
 
 	/**
