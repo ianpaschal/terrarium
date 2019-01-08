@@ -50,7 +50,7 @@ export default new System({
 		const terrain = new Object3D();
 		terrain.name = "terrain";
 
-		const worldSize = 4;
+		const worldSize = 8;
 		const scale = 32;
 
 		for ( let chunkX = worldSize / -2; chunkX < worldSize / 2; chunkX++ ) {
@@ -59,9 +59,21 @@ export default new System({
 
 				let chunkData = [];
 
+				const contactMap = {
+					x: [],
+					y: [],
+					z: []
+				};
+
 				// Fill chunk in columns based on elevation
-				for ( let x = 0; x < 16; x++ ) {
-					for ( let y = 0; y < 16; y++ ) {
+
+				// The chunk mesh is only 16 x 16 x 16 but by including an extra row, we can
+				// generate the geometry far easier because we know what the first row of the next
+				// chunk will be
+				for ( let x = 0; x <= 16; x++ ) {
+
+					for ( let y = 0; y <= 16; y++ ) {
+
 						const elevation = Math.round( this.generator.noise2D(
 							( chunkPosition.x + x ) / scale,
 							( chunkPosition.y + y ) / scale
@@ -70,7 +82,7 @@ export default new System({
 						for ( let z = 1; z < elevation; z++ ) {
 							column.push( 1 );
 						}
-						while ( column.length < 16 ) {
+						while ( column.length <= 16 ) {
 							column.push( 0 );
 						}
 						chunkData = chunkData.concat( column );
@@ -79,11 +91,16 @@ export default new System({
 
 				// Now create a chunk with the data:
 				const chunk = new Chunk( chunkPosition, chunkData );
-				chunk.mesh.position.copy( chunkPosition );
-				terrain.add( chunk.mesh );
 				this.chunks.push( chunk );
 			}
 		}
+
+		// Update all contact maps
+		this.chunks.forEach( ( chunk ) => {
+			chunk.updateMesh();
+			terrain.add( chunk.mesh );
+		});
+
 		scene.add( terrain );
 	},
 	onAddEntity() {

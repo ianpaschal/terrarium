@@ -3,7 +3,6 @@
 import {
 	Box3,
 	BufferGeometry,
-	Face3,
 	Float32BufferAttribute,
 	LinearMipMapLinearFilter,
 	Mesh,
@@ -11,13 +10,12 @@ import {
 	MeshNormalMaterial,
 	NearestFilter,
 	TextureLoader,
-	Vector2,
 	Vector3,
 } from "three";
 
 // Globals
 const CHUNK_SIZE = 16;
-const BLOCK_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
+const VOXEL_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
 
 const GLOBAL_MATERIALS = [];
 const LOADER = new TextureLoader();
@@ -41,10 +39,12 @@ TEXTURE_SOURCES.forEach( ( file ) => {
 
 class Chunk {
 
-	constructor( position, blockIndices ) {
+	constructor( position, voxelValues ) {
 
-		// Length is always 4096 (16 x 16 x 16)
-		this.blockIndices = blockIndices;
+		// Length is always 4913 (17 x 17 x 17)
+		// The chunk mesh is only 16 x 16 x 16 but by including an extra row, we can generate the
+		// geometry far easier because we know what the first row of the next chunk will be
+		this.voxelValues = voxelValues;
 
 		// Chunk coordinates:
 		this.position = position;
@@ -55,39 +55,37 @@ class Chunk {
 			this.position.y + CHUNK_SIZE,
 			this.position.z + CHUNK_SIZE
 		) );
-
-		// this.mesh = new Object3D();
-		this.geometry = this.generateGeometry();
-		this.mesh = new Mesh( this.geometry, new MeshNormalMaterial() );
 	}
 
 	/**
-	 * Get the position of the block with the given index.
-	 * @param {Number} i - Index of block
+	 * Get the position of the voxel with the given index.
+	 * @param {Number} i - Index of voxel
 	 */
-	getBlockLocation( i ) {
-		if ( i < 0 || i >= BLOCK_COUNT ) {
-			console.warn( "Block index out of bounds, cannot convert to location" );
+	getVoxelLocation( i ) {
+		if ( i < 0 || i >= VOXEL_COUNT ) {
+			console.warn( "Voxel index out of bounds, cannot convert to location" );
 			return null;
 		}
-		const x = Math.floor( i / Math.pow( CHUNK_SIZE, 2 ) );
-		const y = Math.floor( ( i - x * Math.pow( CHUNK_SIZE, 2 ) ) / CHUNK_SIZE );
-		const z = i % CHUNK_SIZE;
+		const x = Math.floor( i / Math.pow( CHUNK_SIZE + 1, 2 ) );
+		const y = Math.floor( ( i - x * Math.pow( CHUNK_SIZE + 1, 2 ) ) / ( CHUNK_SIZE + 1 ) );
+		const z = i % ( CHUNK_SIZE + 1 );
 		return new Vector3( x, y, z );
 	}
 
 	/**
-	 * Get the index of the block at the given position.
+	 * Get the index of the voxel at the given position.
 	 * @param {Vector3} vector - Vector within the chunk
 	 */
-	getBlockIndex( vector ) {
-		// if ( this.bounds.containsPoint( vector ) === false ) {
-		// 	console.warn( "Block vector out of bounds, cannot convert to index" );
+	getVoxelIndex( v ) {
+		// if ( v.x < 0 || v.x > 15 || v.y < 0 || v.y > 15 || v.z < 0 || v.z > 15 ) {
+		// 	console.warn( "Voxel vector out of bounds, cannot convert to index" );
 		// 	return null;
 		// }
-		const x = vector.x * Math.pow( CHUNK_SIZE, 2 );
-		const y = vector.y * CHUNK_SIZE;
-		const z = vector.z;
+
+		// Use CHUNK_SIZE + 1 because we're searching the raw 17x17x17 array
+		const x = v.x * Math.pow( CHUNK_SIZE + 1, 2 );
+		const y = v.y * ( CHUNK_SIZE + 1 );
+		const z = v.z;
 		return x + y + z;
 	}
 
@@ -101,141 +99,171 @@ class Chunk {
 		});
 	}
 
+	updateMesh() {
+		this.geometry = this.generateGeometry();
+		this.material = new MeshNormalMaterial();
+
+		if ( this.mesh ) {
+			this.mesh.geometry = this.geometry;
+			this.mesh.material = this.material;
+			this.mesh.geometry.needsUpdate = true;
+		} else {
+			this.mesh = new Mesh( this.geometry, this.material );
+		}
+		this.mesh.position.copy( this.position );
+	}
+
+	// /**
+	//  * Check if a voxel's neighbor from a given location and direction is solid or not
+	//  * @param {*} location
+	//  * @param {*} direction
+	//  */
+	// getContactValue( location, direction ) {
+	// 	// TODO: Error handling if direction is negative or location isn't on edge
+
+	// 	let i;
+	// 	if ( direction.x === 1 ) {
+	// 		i = location.z + location.y * CHUNK_SIZE;
+	// 		return this.contactMap.x[ i ];
+	// 	}
+	// 	if ( direction.y === 1 ) {
+	// 		i = location.z + location.x * CHUNK_SIZE;
+	// 		return this.contactMap.y[ i ];
+	// 	}
+	// 	if ( direction.z === 1 ) {
+	// 		i = location.z + location.x * CHUNK_SIZE;
+	// 		return this.contactMap.y[ i ];
+	// 	}
+	// }
+
 	/**
-	 * Regenerate the chunk mesh (destroys existing and replaces).
+	 * Generate the chunk geometry
 	 */
 	generateGeometry() {
 
-		let vertices = [];
+		// Use these for some DRY-loops
+		const axes = [ "x", "y", "z" ];
+
+		const positions = [];
 		const normals = [];
 		const faceIndices = [];
 
-		/*
-			This is a more efficient way to generating chunk geometry. Originally,
-			every single block was checked on all six sides, meaning the negative
-			direction had already been checked. For this reason, we check only the
-			blocks at x+1, y+1, and z+1. The exception is for edge blocks which must
-			check adjacent chunks.
-		*/
+		/**
+		 * Rather than check six sides of each voxel, we check only the positive direction in each
+		 * of 3 axes.
+		 * There are two execptions:
+		 * If any axis value is 0 and we need to check the negative direction
+		 * If any axis value is 15, we need to check the neighboring chunk
+		 */
 
 		// This is a helper function for generating faces on the buffer geometry
 		// It pushes stuff to the arrays defined at the beginning of generateGeometry()
 		function addFaceToGeometry( location, direction ) {
 
+			// Add x, y, and z values from the direction vector 4 times
+			for ( let i = 0; i < 4; i++ ) {
+				axes.forEach( ( axis ) => {
+					normals.push( direction[ axis ] );
+				});
+			}
+
 			/*
 			Create them counter-clockwise (normal wrapping order)
 			A, B, C and A, C, D
-			B ----- A
-			|    /  |
-			|   /   |
-			|  /    |
-			C ----- D
+			B -- A
+			|   /|
+			|  / |
+			| /  |
+			C -- D
 			*/
 
 			const corners = computeVertices( location, direction );
 
-			normals.push(
-				direction.x, direction.y, direction.z,
-				direction.x, direction.y, direction.z,
-				direction.x, direction.y, direction.z,
-				direction.x, direction.y, direction.z
-			);
+			for ( let i = 0; i < corners.length; i++ ) {
+				positions.push( corners[ i ] );
+			}
 
-			vertices = vertices.concat( corners );
+			const numVertices = positions.length / 3;
 
-			const a = vertices.length - 4;
-			const b = vertices.length - 3;
-			const c = vertices.length - 2;
-			const d = vertices.length - 1;
+			const a = numVertices - 4;
+			const b = numVertices - 3;
+			const c = numVertices - 2;
+			const d = numVertices - 1;
 
 			faceIndices.push( a, b, c );
 			faceIndices.push( a, c, d );
 
 		}
 
-		// Use these for some DRY-loops
-		const axes = [ "x", "y", "z" ];
+		// For each voxel in the chunk...
+		for ( let x = 0; x < CHUNK_SIZE; x++ ) {
+			for ( let y = 0; y < CHUNK_SIZE; y++ ) {
+				for ( let z = 0; z < CHUNK_SIZE; z++ ) {
 
-		// For each block in the chunk...
-		for ( let i = 0; i < BLOCK_COUNT; i++ ) {
+					const position = new Vector3( x, y, z );
 
-			// Get its location WITHIN the chunk
-			const location = this.getBlockLocation( i );
+					const i = this.getVoxelIndex( position );
 
-			// For each neighbor (north, east, top)...
-			axes.forEach( ( axis ) => {
+					// For each neighbor (north, east, top)...
+					axes.forEach( ( axis ) => {
 
-				// Compute the neighbor location to check
-				const direction = new Vector3();
-				direction[ axis ] += 1;
+						// Compute the neighbor location to check
+						const direction = new Vector3();
+						direction[ axis ] += 1;
 
-				const checkLocation = location.clone().add( direction );
+						const neighborPosition = position.clone().add( direction );
 
-				const j = this.getBlockIndex( checkLocation );
+						const j = this.getVoxelIndex( neighborPosition );
 
-				// TODO: RENABLE LATER
-				// Must generate a face for east/north/top sides of the chunk
-				// if ( location[ axis ] === CHUNK_SIZE - 1 ) {
-				// 	if ( this.blockIndices[ i ] !== 0 ) {
-				// 		// Generate a face for that axis with positive normals
-				// 		this.generateFace( i, direction );
-				// 	}
-				// 	return;
-				// }
+						// // If check location is in the next chunk
+						// if ( checkLocation[ axis ] === CHUNK_SIZE ) {
 
-				// Must generate a face for west/south/bottom sides of the chunk
-				// if ( location[ axis ] === 0 && this.blockIndices[ i ] !== 0 ) {
-				// 	// Generate a face for that axis with negative normals
-				// 	this.generateFace( i, direction.clone().negate() );
-				// }
+						// 	// If neighbor is not solid, and this block is
+						// 	if ( !this.getContactValue( location, direction ) ) {
+						// 		if ( this.voxelValues[ i ] !== 0 ) {
+						// 			// Generate a face for that axis with positive normals
+						// 			addFaceToGeometry( location, direction );
+						// 			return;
+						// 		}
+						// 	}
+						// }
 
-				// Perform logic checking if neighbor is solid or not
+						// If this voxel is solid and the neighbor is not, generate a face
+						if ( this.voxelValues[ i ] !== 0 && this.voxelValues[ j ] === 0 ) {
 
-				// If this block is solid and the neighbor is air, generate a face
-				if ( this.blockIndices[ i ] !== 0 ) {
-					if ( this.blockIndices[ j ] === 0 ) {
-						// Generate a face for that axis with positive normals
-						// Use block i but since the coordinates of block i are on the neg
-						// corner (west/south/bottom)
-						addFaceToGeometry( location, direction );
-						return;
-					}
-				} else {
-					// Otherwise this block must be air, so check if the neigborh is solid
-					direction.negate();
-					if ( this.blockIndices[ j ] !== 0 ) {
-						// Generate a face for that axis with negative normals
-						addFaceToGeometry( checkLocation, direction );
-						return;
-					}
+							// Generate a face for that axis with positive normals
+							addFaceToGeometry( position, direction );
+							return;
+						}
+						// If this voxel is air and the neighbor is not, generate a backwards face
+						if ( this.voxelValues[ i ] === 0 && this.voxelValues[ j ] !== 0 ) {
+
+							// Generate a face for that axis with negative (backwards) normals
+							addFaceToGeometry( neighborPosition, direction.negate() );
+							return;
+						}
+					});
 				}
-			});
+			}
 		}
 
 		// Create an empty buffer geometry
 		const geometry = new BufferGeometry();
 		geometry.setIndex( faceIndices );
-		geometry.addAttribute( "position", new Float32BufferAttribute( vertices, 3 ) );
+		geometry.addAttribute( "position", new Float32BufferAttribute( positions, 3 ) );
 		geometry.addAttribute( "normal", new Float32BufferAttribute( normals, 3 ) );
 
-		console.log( geometry );
-
-		// Overwrite mesh (might already exist)
-		if ( this.mesh ) {
-			this.mesh.geometry = geometry;
-			this.mesh.geometry.needsUpdate = true;
-		}
-
+		return geometry;
 	}
 
 	/**
-	 * Set a new value for a block at a given index, and update the mesh around
-	 * around that block.
+	 * Set a new value for a voxel at a given index, and update the mesh around
+	 * around that voxel.
 	 * @param {Number} i
 	 * @param {Number} value
 	 */
 	setVoxelData( i, value ) {
-		this.blockIndices[ i ] = value;
+		this.voxelValues[ i ] = value;
 	}
 }
 
@@ -291,6 +319,8 @@ function computeVertices( p, d ) {
 
 	// Since chunks use buffer geometry, so vectors should be an array of 12 floats
 	const vectors = [];
+
+	// TODO: Make this more algorithmic/DRY
 
 	// "East"
 	if ( d.x === 1 ) {
@@ -399,11 +429,11 @@ function computeVertices( p, d ) {
 // 	const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
 // 	const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
 
-// 	// faceA.voxelPosition = this.getBlockLocation( index ).add( this.position );
-// 	// faceB.voxelPosition = this.getBlockLocation( index ).add( this.position );
+// 	// faceA.voxelPosition = this.getVoxelLocation( index ).add( this.position );
+// 	// faceB.voxelPosition = this.getVoxelLocation( index ).add( this.position );
 
 // 	// // Assign material
-// 	// switch( this.blockIndices[ index ] ) {
+// 	// switch( this.voxelValues[ index ] ) {
 // 	// 	// Grass
 // 	// 	case 1:
 // 	// 		if (
