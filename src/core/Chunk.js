@@ -77,10 +77,10 @@ class Chunk {
 	 * @param {Vector3} vector - Vector within the chunk
 	 */
 	getVoxelIndex( v ) {
-		// if ( v.x < 0 || v.x > 15 || v.y < 0 || v.y > 15 || v.z < 0 || v.z > 15 ) {
-		// 	console.warn( "Voxel vector out of bounds, cannot convert to index" );
-		// 	return null;
-		// }
+		if ( v.x < 0 || v.x > 16 || v.y < 0 || v.y > 16 || v.z < 0 || v.z > 16 ) {
+			console.warn( "Voxel vector out of bounds, cannot convert to index" );
+			return null;
+		}
 
 		// Use CHUNK_SIZE + 1 because we're searching the raw 17x17x17 array
 		const x = v.x * Math.pow( CHUNK_SIZE + 1, 2 );
@@ -112,29 +112,6 @@ class Chunk {
 		}
 		this.mesh.position.copy( this.position );
 	}
-
-	// /**
-	//  * Check if a voxel's neighbor from a given location and direction is solid or not
-	//  * @param {*} location
-	//  * @param {*} direction
-	//  */
-	// getContactValue( location, direction ) {
-	// 	// TODO: Error handling if direction is negative or location isn't on edge
-
-	// 	let i;
-	// 	if ( direction.x === 1 ) {
-	// 		i = location.z + location.y * CHUNK_SIZE;
-	// 		return this.contactMap.x[ i ];
-	// 	}
-	// 	if ( direction.y === 1 ) {
-	// 		i = location.z + location.x * CHUNK_SIZE;
-	// 		return this.contactMap.y[ i ];
-	// 	}
-	// 	if ( direction.z === 1 ) {
-	// 		i = location.z + location.x * CHUNK_SIZE;
-	// 		return this.contactMap.y[ i ];
-	// 	}
-	// }
 
 	/**
 	 * Generate the chunk geometry
