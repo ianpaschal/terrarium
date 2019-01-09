@@ -192,19 +192,6 @@ class Chunk {
 
 						const j = this.getVoxelIndex( neighborPosition );
 
-						// // If check location is in the next chunk
-						// if ( checkLocation[ axis ] === CHUNK_SIZE ) {
-
-						// 	// If neighbor is not solid, and this block is
-						// 	if ( !this.getContactValue( location, direction ) ) {
-						// 		if ( this.voxelValues[ i ] !== 0 ) {
-						// 			// Generate a face for that axis with positive normals
-						// 			addFaceToGeometry( location, direction );
-						// 			return;
-						// 		}
-						// 	}
-						// }
-
 						// If this voxel is solid and the neighbor is not, generate a face
 						if ( this.voxelValues[ i ] !== 0 && this.voxelValues[ j ] === 0 ) {
 
