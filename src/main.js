@@ -30,9 +30,6 @@ function createPlayWindow() {
 		slashes: true
 	}) );
 
-	// Open the DevTools
-	windows.play.webContents.openDevTools();
-
 	// Emitted when the window is closed
 	windows.play.on( "closed", () => {
 		delete windows.play;
