@@ -4,38 +4,40 @@ import {
 	Box3,
 	BufferGeometry,
 	Float32BufferAttribute,
-	LinearMipMapLinearFilter,
+	// LinearMipMapLinearFilter,
 	Mesh,
 	MeshLambertMaterial,
-	MeshNormalMaterial,
-	NearestFilter,
-	TextureLoader,
+	// MeshNormalMaterial,
+	// NearestFilter,
+	// TextureLoader,
 	Vector3,
 } from "three";
 
 // Globals
 const CHUNK_SIZE = 16;
 const VOXEL_COUNT = Math.pow( CHUNK_SIZE, 3 ); // 4096
+const VOXEL_SIZE = 1;
+const RESOLUTION = CHUNK_SIZE / VOXEL_SIZE;
 
-const GLOBAL_MATERIALS = [];
-const LOADER = new TextureLoader();
+// const GLOBAL_MATERIALS = [];
+// const LOADER = new TextureLoader();
 
-const TEXTURE_SOURCES = [
-	"../resources/textures/grass_side.png",
-	"../resources/textures/grass_top.png",
-	"../resources/textures/dirt.png",
-	"../resources/textures/cobble_stone.png"
-];
+// const TEXTURE_SOURCES = [
+// 	"../resources/textures/grass_side.png",
+// 	"../resources/textures/grass_top.png",
+// 	"../resources/textures/dirt.png",
+// 	"../resources/textures/cobble_stone.png"
+// ];
 
-TEXTURE_SOURCES.forEach( ( file ) => {
-	const texture = LOADER.load( file );
-	texture.magFilter = NearestFilter;
-	texture.minFilter = LinearMipMapLinearFilter;
-	GLOBAL_MATERIALS.push( new MeshLambertMaterial({
-		color: 0xFFFFFF,
-		map: texture
-	}) );
-});
+// TEXTURE_SOURCES.forEach( ( file ) => {
+// 	const texture = LOADER.load( file );
+// 	texture.magFilter = NearestFilter;
+// 	texture.minFilter = LinearMipMapLinearFilter;
+// 	GLOBAL_MATERIALS.push( new MeshLambertMaterial({
+// 		color: 0xFFFFFF,
+// 		map: texture
+// 	}) );
+// });
 
 class Chunk {
 
@@ -101,7 +103,9 @@ class Chunk {
 
 	updateMesh() {
 		this.geometry = this.generateGeometry();
-		this.material = new MeshNormalMaterial();
+		this.material = new MeshLambertMaterial({
+			color: 0xFFFFFF
+		});
 
 		if ( this.mesh ) {
 			this.mesh.geometry = this.geometry;
@@ -122,7 +126,9 @@ class Chunk {
 		const axes = [ "x", "y", "z" ];
 
 		const positions = [];
-		const normals = [];
+		const normals = []; // Length should match positions length
+		const uvs = []; // Length should match positions length
+
 		const faceIndices = [];
 
 		/**
@@ -170,6 +176,7 @@ class Chunk {
 			faceIndices.push( a, b, c );
 			faceIndices.push( a, c, d );
 
+			uvs.push( 0, 1, 1, 1, 1, 0, 0, 0 );
 		}
 
 		// For each voxel in the chunk...
@@ -216,6 +223,7 @@ class Chunk {
 		geometry.setIndex( faceIndices );
 		geometry.addAttribute( "position", new Float32BufferAttribute( positions, 3 ) );
 		geometry.addAttribute( "normal", new Float32BufferAttribute( normals, 3 ) );
+		geometry.addAttribute( "uv", new Float32BufferAttribute( uvs, 2 ) );
 
 		return geometry;
 	}
@@ -229,6 +237,34 @@ class Chunk {
 	setVoxelData( i, value ) {
 		this.voxelValues[ i ] = value;
 	}
+
+	// // TODO: This is all work in progress. The issue right now is determining at lower res
+	// // what the neighbors on the edges are.
+	// generateLOD( level ) {
+
+	// 	// 2^0 = 1, 2^1 = 2, 2^2 = 4, 2^3 = 8, 2^4 = 16
+	// 	const factor = Math.pow( 2, level );
+
+	// 	// jump every factor
+	// 	for ( let x = 0; x < CHUNK_SIZE; x += factor ) {
+	// 		for ( let y = 0; y < CHUNK_SIZE; y += factor ) {
+	// 			for ( let z = 0; z < CHUNK_SIZE; z += factor ) {
+
+	// 				const collectedVoxels = [];
+
+	// 				for ( let xx = 0; xx < factor; xx++ ) {
+	// 					for ( let yy = 0; yy < factor; yy++ ) {
+	// 						for ( let zz = 0; zz < factor; zz++ ) {
+	// 							const position = new Vector3( x + xx, y + yy, z + zz );
+	// 							const i = this.getVoxelIndex( position );
+	// 							collectedVoxels.push( this.voxelValues( i ) );
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 export default Chunk;
@@ -352,94 +388,3 @@ function computeVertices( p, d ) {
 		return vectors;
 	}
 }
-
-// /**
-//  * This extends a given geometry with new faces for a given voxel location and direction
-//  * @param {*} geometry - The geometry to copy and extend
-//  * @param {*} location
-//  * @param {*} direction
-//  * @returns {BufferGeometry} - The extended geometry
-//  */
-// function addFaceToGeometry( location, direction ) {
-
-// 	/*
-// 	Create them counter-clockwise (normal wrapping order)
-// 	A, B, C and A, C, D
-// 	B ----- A
-// 	|    /  |
-// 	|   /   |
-// 	|  /    |
-// 	C ----- D
-// 	*/
-
-// 	const corners = computeVertices( location, direction );
-
-// 	const indices = [];
-
-// 	// Try to re-use existing vectors. If a vector with the right position
-// 	// is found, use that, otherwise push the vector to the geometry and
-// 	// use its index for the face
-// 	corners.forEach( ( triplet ) => {
-// 		const index = findIndexByVector( geometry, triplet );
-// 		if ( index >= 0 ) {
-// 			indices.push( index );
-// 		} else {
-// 			const length = geometry.vertices.push( triplet );
-// 			indices.push( length - 1 );
-// 		}
-// 	});
-
-// 	// Create the faces
-// 	const faceA = new Face3( indices[ 0 ], indices[ 1 ], indices[ 2 ] );
-// 	const faceB = new Face3( indices[ 0 ], indices[ 2 ], indices[ 3 ] );
-
-// 	// faceA.voxelPosition = this.getVoxelLocation( index ).add( this.position );
-// 	// faceB.voxelPosition = this.getVoxelLocation( index ).add( this.position );
-
-// 	// // Assign material
-// 	// switch( this.voxelValues[ index ] ) {
-// 	// 	// Grass
-// 	// 	case 1:
-// 	// 		if (
-// 	// 			direction.equals( new Vector3( 1, 0, 0 ) ) ||
-// 	// 				direction.equals( new Vector3( 0, 1, 0 ) ) ||
-// 	// 				direction.equals( new Vector3( -1, 0, 0 ) ) ||
-// 	// 				direction.equals( new Vector3( 0, -1, 0 ) )
-// 	// 		) {
-// 	// 			faceA.materialIndex = 0;
-// 	// 			faceB.materialIndex = 0;
-// 	// 		}
-
-// 	// 		if ( direction.equals( new Vector3( 0, 0, 1 ) ) ) {
-// 	// 			faceA.materialIndex = 1;
-// 	// 			faceB.materialIndex = 1;
-// 	// 		}
-// 	// 		if ( direction.equals( new Vector3( 0, 0, -1 ) ) ) {
-// 	// 			faceA.materialIndex = 2;
-// 	// 			faceB.materialIndex = 2;
-// 	// 		}
-// 	// 		break;
-// 	// 	case 2:
-// 	// 		faceA.materialIndex = 3;
-// 	// 		faceB.materialIndex = 3;
-// 	// 		break;
-// 	// 	default:
-// 	// 		faceA.materialIndex = 3;
-// 	// 		faceB.materialIndex = 3;
-// 	// }
-
-// 	// Add the face to the geometry's faces array
-// 	this.geometry.faces.push( faceA, faceB );
-// 	this.geometry.faceVertexUvs.push( [] );
-// 	this.geometry.faceVertexUvs[ 0 ].push( [
-// 		new Vector2( 0, 1 ),
-// 		new Vector2( 1, 1 ),
-// 		new Vector2( 1, 0 )
-// 	] );
-// 	this.geometry.faceVertexUvs[ 0 ].push( [
-// 		new Vector2( 0, 1 ),
-// 		new Vector2( 1, 0 ),
-// 		new Vector2( 0, 0 )
-// 	] );
-// 	this.geometry.computeFaceNormals();
-// }
