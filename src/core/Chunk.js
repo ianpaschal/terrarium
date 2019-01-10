@@ -104,7 +104,7 @@ class Chunk {
 	updateMesh() {
 		this.geometry = this.generateGeometry();
 		this.material = new MeshLambertMaterial({
-			color: 0xFFFFFF
+			color: 0xAAAAAA
 		});
 
 		if ( this.mesh ) {
