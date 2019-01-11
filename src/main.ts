@@ -55,10 +55,10 @@ app.on( "activate", () => {
 	}
 });
 
-ipcMain.on( "tick", ( e, data ) => {
+ipcMain.on( "TICK", ( e, data ) => {
 	// console.log( data );
 	// engine.tick();
-	e.sender.send( "state", {
+	e.sender.send( "STATE", {
 		entities: [ "poop" ]
 	});
 });
@@ -66,11 +66,8 @@ ipcMain.on( "tick", ( e, data ) => {
 // When the keyboard controller changes the player input, it arrives here and is used by the
 // movement system
 // data = { front, back, left, right, up, down bools }
-ipcMain.on( "set-player-input", ( e, data ) => {
-	// console.log( data );
-	e.sender.send( "state", {
-		entities: []
-	});
+ipcMain.on( "PLAYER_INPUT", ( e, index, data ) => {
+	console.log( index, data );
 });
 
 // When the scene and mouse controller change the cursor location, it arrives here
@@ -79,8 +76,4 @@ ipcMain.on( "set-voxel-value", ( e, data ) => {
 
 });
 
-ipcMain.on( "PLAYER_INPUT", ( e, data ) => {
-	console.log( data );
-});
-
-// engine.start();
+engine.start();

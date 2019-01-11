@@ -202,7 +202,7 @@ export default class PlayerController {
 	}
 
 	sendInputData() {
-		ipcRenderer.send( "PLAYER_INPUT", this.netInputData );
+		ipcRenderer.send( "PLAYER_INPUT", this.index, this.netInputData );
 	}
 
 	spawn() {

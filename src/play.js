@@ -16,8 +16,7 @@ function init() {
 		75, window.innerWidth / window.innerHeight, 0.01, 1000
 	);
 
-	// Hack until entities are worked out
-	player = new PlayerController( camera ); // TODO: Attach separately
+	player = new PlayerController( camera );
 	player.spawn();
 
 	renderer = new WebGLRenderer({
@@ -44,7 +43,7 @@ function animate() {
 		const time = performance.now();
 		const delta = ( time - prevTime );
 		prevTime = time;
-		ipcRenderer.send( "tick", delta );
+		ipcRenderer.send( "TICK", delta );
 	}
 
 	// Render
@@ -55,6 +54,6 @@ function animate() {
 init();
 animate();
 
-ipcRenderer.on( "state", ( e, data ) => {
+ipcRenderer.on( "STATE", ( e, data ) => {
 	console.log( "got data", data );
 });
