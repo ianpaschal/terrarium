@@ -63,3 +63,7 @@ animate();
 ipcRenderer.on( "STATE", ( e, data ) => {
 	console.log( "got data", data );
 });
+
+ipcRenderer.on( "TERRAIN_MESH_DATA", ( e, data ) => {
+	console.log( "TERRAIN_MESH_DATA", data );
+});

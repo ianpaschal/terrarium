@@ -77,3 +77,8 @@ ipcMain.on( "set-voxel-value", ( e, data ) => {
 });
 
 engine.start();
+
+// TODO: Add listener after each tick which sends over any currently built chunk's buffer data
+// get system terrain
+// get all chunk mesh datas
+// storeWindow.webContents.send('TERRAIN_MESH_DATA', data);
