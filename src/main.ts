@@ -1,17 +1,17 @@
 // Terrarium is distributed under the MIT license.
 
-const { app, BrowserWindow } = require( "electron" );
-const Path = require ( "path" );
-const URL = require ( "url" );
+import { app, BrowserWindow } from "electron";
+import * as Path from "path";
+import * as URL from "url";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-const windows = {};
+let window;
 
 function createPlayWindow() {
 
 	// Create the browser window
-	windows.play = new BrowserWindow({
+	window = new BrowserWindow({
 		minHeight: 600,
 		minWidth: 800,
 		width: 800,
@@ -21,19 +21,19 @@ function createPlayWindow() {
 		frame: true,
 		transparent: false
 	});
-	windows.play.setMenu( null );
+	window.setMenu( null );
 
 	// and load the index.html of the app
-	windows.play.loadURL( URL.format({
+	window.loadURL( URL.format({
 		pathname: Path.join( app.getAppPath(), "dist/index.html" ),
 		protocol: "file:",
 		slashes: true
 	}) );
 
 	// Emitted when the window is closed
-	windows.play.on( "closed", () => {
-		delete windows.play;
-	});
+	// window.on( "closed", () => {
+	// 	delete window;
+	// });
 }
 
 // Create window when app is ready:
@@ -48,7 +48,7 @@ app.on( "window-all-closed", () => {
 
 // Re-create window if somehow it went missing
 app.on( "activate", () => {
-	if ( windows.play === null ) {
+	if ( window === null ) {
 		createPlayWindow();
 	}
 });
