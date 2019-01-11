@@ -1,13 +1,15 @@
 // Terrarium is distributed under the MIT license.
 
-import { PerspectiveCamera, WebGLRenderer } from "three";
+import { Fog, PerspectiveCamera, WebGLRenderer } from "three";
 import PlayerController from "./controls/PlayerController";
 import scene from "./scene";
 import { ipcRenderer } from "electron";
+import DaylightSystem from "./world/DaylightSystem";
 
 let camera;
 let renderer;
 let player;
+let daylightSystem;
 
 let prevTime = performance.now();
 
@@ -18,6 +20,10 @@ function init() {
 
 	player = new PlayerController( camera );
 	player.spawn();
+
+	scene.fog = new Fog( 0xffffff, 0, 512 );
+	daylightSystem = new DaylightSystem();
+	scene.add( daylightSystem );
 
 	renderer = new WebGLRenderer({
 		antialias: false // for performance gain
