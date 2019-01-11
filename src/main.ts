@@ -1,8 +1,10 @@
 // Terrarium is distributed under the MIT license.
 
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as Path from "path";
 import * as URL from "url";
+
+import engine from "./engine";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -31,9 +33,9 @@ function createPlayWindow() {
 	}) );
 
 	// Emitted when the window is closed
-	// window.on( "closed", () => {
-	// 	delete window;
-	// });
+	window.on( "closed", () => {
+		window = undefined;
+	});
 }
 
 // Create window when app is ready:
@@ -52,3 +54,33 @@ app.on( "activate", () => {
 		createPlayWindow();
 	}
 });
+
+ipcMain.on( "tick", ( e, data ) => {
+	// console.log( data );
+	// engine.tick();
+	e.sender.send( "state", {
+		entities: [ "poop" ]
+	});
+});
+
+// When the keyboard controller changes the player input, it arrives here and is used by the
+// movement system
+// data = { front, back, left, right, up, down bools }
+ipcMain.on( "set-player-input", ( e, data ) => {
+	// console.log( data );
+	e.sender.send( "state", {
+		entities: []
+	});
+});
+
+// When the scene and mouse controller change the cursor location, it arrives here
+// data = { vec3, value }
+ipcMain.on( "set-voxel-value", ( e, data ) => {
+
+});
+
+ipcMain.on( "PLAYER_INPUT", ( e, data ) => {
+	console.log( data );
+});
+
+// engine.start();

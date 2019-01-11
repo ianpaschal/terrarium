@@ -7,12 +7,19 @@ export default new System({
 	fixed: false,
 	step: 500,
 	componentTypes: [
-		"player"
+		"position",
+		"velocity",
+		"player-input",
+		"player-index"
 	],
 	onInit() {
 		// Do nothing for now
 	},
 	onUpdate( t ) {
+
+		this.entityUUIDs.forEach( ( entity ) => {
+
+		});
 
 		// Use s instead of ms
 		t = t / 1000;
