@@ -1,8 +1,8 @@
-// Forge source code is distributed under the MIT license.
+// Terrarium is distributed under the MIT license.
 
-import { app, BrowserWindow } from "electron";
-import Path from "path";
-import URL from "url";
+const { app, BrowserWindow } = require( "electron" );
+const Path = require ( "path" );
+const URL = require ( "url" );
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -25,13 +25,10 @@ function createPlayWindow() {
 
 	// and load the index.html of the app
 	windows.play.loadURL( URL.format({
-		pathname: Path.join( app.getAppPath(), "index.html" ),
+		pathname: Path.join( app.getAppPath(), "dist/index.html" ),
 		protocol: "file:",
 		slashes: true
 	}) );
-
-	// Open the DevTools
-	windows.play.webContents.openDevTools();
 
 	// Emitted when the window is closed
 	windows.play.on( "closed", () => {
