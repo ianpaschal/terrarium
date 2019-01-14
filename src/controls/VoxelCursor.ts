@@ -1,6 +1,7 @@
 import { Vector3, Geometry, LineSegments, LineBasicMaterial } from "three";
 
 class VoxelCursor {
+	cursor: LineSegments;
 	constructor() {
 		// Cursor lines:
 		const segments = [
@@ -40,7 +41,9 @@ class VoxelCursor {
 		cursorGeometry.vertices = segments;
 		this.cursor = new LineSegments(
 			cursorGeometry,
-			new LineBasicMaterial( 0xffffff )
+			new LineBasicMaterial({
+				color: 0xffffff
+			})
 		);
 		this.cursor.name = "cursor";
 		this.cursor.direction = new Vector3();

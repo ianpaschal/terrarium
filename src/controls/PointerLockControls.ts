@@ -5,6 +5,21 @@ function clip( min, value, max ) {
 }
 
 class PointerLockControls {
+
+	pitch: number;
+	yaw: number;
+	sensitivity: {
+		x: number,
+		y: number
+	};
+	handlers: {
+		0: Function,
+		1: Function,
+		2: Function,
+		"move": Function
+	};
+	enabled: boolean;
+
 	constructor() {
 
 		this.pitch = 0;
