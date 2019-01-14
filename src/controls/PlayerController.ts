@@ -8,8 +8,8 @@ import scene from "../scene";
 import { ipcRenderer } from "electron";
 
 /**
- * The Player Controller class uses a KeyboardInput Controller, a MouseInputController, and a cursor
- * to manipulate scene objects. It is a singleton tied to the renderer process.
+ * @classdesc The Player Controller class uses a KeyboardInput Controller, a MouseInputController,
+ * and a cursor to manipulate scene objects. It is a singleton tied to the renderer process.
  */
 export default class PlayerController {
 

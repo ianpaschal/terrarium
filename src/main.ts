@@ -11,7 +11,9 @@ import engine from "./engine";
 // be closed automatically when the JavaScript object is garbage collected.
 let window;
 
-let player0;
+const player0 = engine.getAssembly( "player" ).clone();
+engine.addEntity( player0 );
+engine.start();
 
 function createPlayWindow() {
 
@@ -89,12 +91,6 @@ ipcMain.on( "SET_VOXEL_VALUE", ( e, position, value ) => {
 	 * will be pushed to the renderer thread when the next state is ready to be sent over.
 	 */
 });
-
-player0 = engine.getAssembly( "player" ).clone();
-
-engine.addEntity( player0 );
-
-engine.start();
 
 /*
 

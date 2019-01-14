@@ -13,8 +13,6 @@ let renderer;
 let player;
 let daylightSystem;
 
-let prevTime = performance.now();
-
 function init() {
 	camera = new PerspectiveCamera(
 		75, window.innerWidth / window.innerHeight, 0.01, 1000
@@ -44,24 +42,18 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function animate() {
+function loop() {
 
-	// Move to player
-	if ( player.enabled ) {
-		const time = performance.now();
-		const delta = ( time - prevTime );
-		prevTime = time;
-		
-	}
+	// Drive the engine in main.ts
 	ipcRenderer.send( "TICK", player.netInputData );
 
 	// Render
 	renderer.render( scene, camera );
-	requestAnimationFrame( animate );
+	requestAnimationFrame( loop );
 }
 
 init();
-animate();
+loop();
 
 ipcRenderer.on( "STATE", ( e, state ) => {
 	const material = new MeshLambertMaterial({
