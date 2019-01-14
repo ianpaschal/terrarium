@@ -1,6 +1,6 @@
 // Terrarium is distributed under the MIT license.
 
-import { Object3D, Raycaster, Vector2, Vector3 } from "three";
+import { Object3D, Raycaster, Vector2, Vector3, PerspectiveCamera } from "three";
 import PointerLockControls from "./PointerLockControls";
 import KeyboardControls from "./KeyboardControls";
 import VoxelCursor from "./VoxelCursor";
@@ -12,6 +12,19 @@ import { ipcRenderer } from "electron";
  * to manipulate scene objects. It is a singleton tied to the renderer process.
  */
 export default class PlayerController {
+
+	camera          : PerspectiveCamera;
+	cursor          : Object3D;
+	enabled         : boolean;
+	index           : number;
+	input           : any;
+	keyboardControls: KeyboardControls;
+	model           : Object3D;
+	mouse           : Vector2;
+	mouseControls   : PointerLockControls;
+	pitchObject     : Object3D;
+	raycaster       : Raycaster;
+	terrain         : Object3D;
 
 	constructor( camera ) {
 
@@ -25,13 +38,13 @@ export default class PlayerController {
 
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
-		this.model.position.z = 10;
+		// this.model.position.z = 10;
 		this.model.add( this.pitchObject );
 
 		this.raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
-		this.cursor = new VoxelCursor();
-		scene.add( this.cursor );
-		this.terrain = scene.getObjectByName( "terrain", true );
+		// this.cursor = new VoxelCursor();
+		// scene.add( this.cursor );
+		// this.terrain = scene.getObjectByName( "terrain" );
 
 		this.input = {
 			forward: false,
@@ -64,60 +77,48 @@ export default class PlayerController {
 				blocker.style.display = "";
 				document.exitPointerLock();
 			}
-		});
+		}, ()=>{});
 
 		// Space
 		this.keyboardControls.addHandler( 32, () => {
 			this.input.up = true;
-			this.sendInputData();
 		}, () => {
 			this.input.up = false;
-			this.sendInputData();
 		});
 
 		// Shift
 		this.keyboardControls.addHandler( 16, () => {
 			this.input.down = true;
-			this.sendInputData();
 		}, () => {
 			this.input.down = false;
-			this.sendInputData();
 		});
 
 		// A
 		this.keyboardControls.addHandler( 65, () => {
 			this.input.left = true;
-			this.sendInputData();
 		}, () => {
 			this.input.left = false;
-			this.sendInputData();
 		});
 
 		// D
 		this.keyboardControls.addHandler( 68, () => {
 			this.input.right = true;
-			this.sendInputData();
 		}, () => {
 			this.input.right = false;
-			this.sendInputData();
 		});
 
 		// S
 		this.keyboardControls.addHandler( 83, () => {
 			this.input.backward = true;
-			this.sendInputData();
 		}, () => {
 			this.input.backward = false;
-			this.sendInputData();
 		});
 
 		// W
 		this.keyboardControls.addHandler( 87, () => {
 			this.input.forward = true;
-			this.sendInputData();
 		}, () => {
 			this.input.forward = false;
-			this.sendInputData();
 		});
 	}
 
@@ -126,7 +127,7 @@ export default class PlayerController {
 		this.mouseControls.addHandler( "move", ( pitch, yaw ) => {
 			this.model.rotation.z = yaw;
 			this.pitchObject.rotation.x = pitch;
-			this.updateCursor();
+			// this.updateCursor();
 		});
 		this.mouseControls.addHandler( 0, () => {
 			if ( this.cursor.visible ) {
@@ -154,13 +155,13 @@ export default class PlayerController {
 		const intersects = this.raycaster.intersectObject( this.terrain, true );
 
 		if ( intersects[ 0 ] ) {
-			if ( !this.cursor.visible ) {
-				this.cursor.visible = true;
-			}
+			// if ( !this.cursor.visible ) {
+			// 	this.cursor.visible = true;
+			// }
 			this.cursor.position.copy( intersects[ 0 ].face.voxelPosition );
 			this.cursor.direction.copy( intersects[ 0 ].face.normal );
 		} else {
-			this.cursor.visible = false;
+			// this.cursor.visible = false;
 		}
 	}
 
@@ -201,12 +202,8 @@ export default class PlayerController {
 		};
 	}
 
-	sendInputData() {
-		ipcRenderer.send( "PLAYER_INPUT", this.index, this.netInputData );
-	}
-
 	spawn() {
-		this.model.position.set( -8, -8, 1 );
+		// this.model.position.set( -8, -8, 1 );
 		scene.add( this.model );
 	}
 }

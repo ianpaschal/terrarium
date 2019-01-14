@@ -1,43 +1,67 @@
 // Terrarium is distributed under the MIT license.
 
 import { System } from "aurora";
+import { Vector3 } from "three";
 
 export default new System({
 	name: "movement",
-	fixed: false,
-	step: 500,
 	componentTypes: [
 		"position",
 		"velocity",
-		"player-input",
-		"player-index"
+		"player-input"
 	],
 	onInit() {
 		// Do nothing for now
 	},
 	onUpdate( t ) {
-
-		this.entityUUIDs.forEach( ( entity ) => {
-
-		});
+		console.log( "updated movement" );
 
 		// Use s instead of ms
 		t = t / 1000;
-
-		const { normalInput, position, velocity } = this._engine.player;
 
 		const aPlayer = 100; // m/s^2
 		const aFriction = -5; // m/s^2
 		// const aGravity = -9.8; // m/s^2
 
-		// Apply dampening acceleration change over time to velocity
-		velocity.add( velocity.clone().multiplyScalar( aFriction * t ) );
+		this._entityUUIDs.forEach( ( uuid ) => {
+			const player = this._engine.getEntity( uuid );
 
-		// Apply player input acceleration change over time to velocity
-		velocity.add( normalInput.multiplyScalar( aPlayer * t ) );
+			function mapToVector( componentType ) {
+				// TODO: Validation!
+				const data = player.getComponentData( componentType );
+				return new Vector3( data.x, data.y, data.z );
+			}
 
-		// Apply velocity change over time to position
-		position.add( velocity.clone().multiplyScalar( t ) );
+			const input = mapToVector( "player-input" );
+			const velocity = mapToVector( "velocity" );
+			const position = mapToVector( "position" );
+
+			console.log( "input at movement.ts", player.getComponentData( "player-input" ) );
+
+			// Apply dampening acceleration change over time to velocity
+			velocity.add( velocity.clone().multiplyScalar( aFriction * t ) );
+
+			// Apply player input acceleration change over time to velocity
+			velocity.add( input.multiplyScalar( aPlayer * t ) );
+
+			// Apply velocity change over time to position
+			position.add( velocity.clone().multiplyScalar( t ) );
+
+			// console.log( velocity, position );
+
+			player.setComponentData( "velocity", {
+				x: velocity.x,
+				y: velocity.y,
+				z: velocity.z
+			});
+			player.setComponentData( "position", {
+				x: position.x,
+				y: position.y,
+				z: position.z
+			});
+			player.dirty = true;
+			
+		});
 	}
 });
 

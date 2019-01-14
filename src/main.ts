@@ -1,6 +1,7 @@
 // Terrarium is distributed under the MIT license.
 
 import { app, BrowserWindow, ipcMain } from "electron";
+import { State } from "aurora";
 import * as Path from "path";
 import * as URL from "url";
 
@@ -9,6 +10,8 @@ import engine from "./engine";
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let window;
+
+let player0;
 
 function createPlayWindow() {
 
@@ -56,29 +59,51 @@ app.on( "activate", () => {
 });
 
 ipcMain.on( "TICK", ( e, data ) => {
-	// console.log( data );
-	// engine.tick();
-	e.sender.send( "STATE", {
-		entities: [ "poop" ]
+	if ( player0 ) {
+		player0.setComponentData( "player-input", data );
+	}
+
+	// Perform all engine updates
+	engine.tick();
+
+	// This state is ONLY entities which were updated with ONLY their updated components
+	// (whole components)
+	const state = new State( engine );
+	if ( state.entities.length > 0 ) {
+		e.sender.send( "STATE", state.flattened );
+
+		// Reset the entities now that the client has received updated information
+		engine.cleanEntities();
+	}
+	// TODO: How to despawn entities (such as terrain tiles)?
+});
+
+// data = { position: vec3, value: int }
+ipcMain.on( "SET_VOXEL_VALUE", ( e, position, value ) => {
+	engine.getSystem( "terrain" ).dispatch( "setVoxel", {
+		position: position,
+		value: value
 	});
+	/**
+	 * We don't send anything back. Chunks will be updated in the terrain system, and changed ones
+	 * will be pushed to the renderer thread when the next state is ready to be sent over.
+	 */
 });
 
-// When the keyboard controller changes the player input, it arrives here and is used by the
-// movement system
-// data = { front, back, left, right, up, down bools }
-ipcMain.on( "PLAYER_INPUT", ( e, index, data ) => {
-	console.log( index, data );
-});
+player0 = engine.getAssembly( "player" ).clone();
 
-// When the scene and mouse controller change the cursor location, it arrives here
-// data = { vec3, value }
-ipcMain.on( "set-voxel-value", ( e, data ) => {
-
-});
+engine.addEntity( player0 );
 
 engine.start();
 
-// TODO: Add listener after each tick which sends over any currently built chunk's buffer data
-// get system terrain
-// get all chunk mesh datas
-// storeWindow.webContents.send('TERRAIN_MESH_DATA', data);
+/*
+
+Some commands:
+
+"UPDATE_CHUNKS", [{x,y,z,indices,positions,normals,uvs}]
+-> in rendering, search chunks object for sub object with that position, replace its goemetry
+
+"UNLOAD_CHUNKS", [{x,y,z}]
+
+"LOAD_CHUNKS", [{x,y,z,indices,positions,normals,uvs}]
+*/
