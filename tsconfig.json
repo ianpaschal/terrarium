@@ -1,16 +1,15 @@
 {
-    "compilerOptions": {
-      "allowSyntheticDefaultImports": true,
-      "esModuleInterop": true,
-      "moduleResolution": "node",
-      "module": "commonjs",
-      "outDir": "./dist",
-      "sourceMap": true,
-      "target": "es2015",
-      "declaration": true
-    },
-    "files": [
-      "./src/main.ts"
-    ]
-  }
-  
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"moduleResolution": "node",
+		"module": "commonjs",
+		"outDir": "./dist",
+		"sourceMap": true,
+		"target": "es2015",
+		"declaration": true
+	},
+	"files": [
+		"./src/main.ts"
+	]
+}

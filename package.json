@@ -1,49 +1,53 @@
 {
-  "name": "terrarium",
-  "version": "1.0.0",
-  "description": "A JavaScript clone of Minecraft with some improvements (I think).",
-  "main": "dist/main.js",
-  "scripts": {
-    "lint": "eslint --fix src/**",
-    "test": "",
-    "bundle": "parcel build src/index.html --target=electron --out-dir dist --public-url ./",
-    "prestart": "tsc && npm run bundle",
-    "start": "electron .",
-    "prebuild": "npm run bundle",
-    "build": "electron-builder"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ianpaschal/terrarium.git"
-  },
-  "author": "Ian Paschal",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ianpaschal/terrarium/issues"
-  },
-  "homepage": "https://github.com/ianpaschal/terrarium#readme",
-  "dependencies": {
-    "aurora": "^2.1.3",
-    "simplex-noise": "^2.4.0",
-    "three": "^0.94.0",
-    "three-orbit-controls": "^82.1.0",
-    "uuid": "^3.2.1"
-  },
-  "devDependencies": {
-    "@types/node": "^10.12.18",
-    "@types/three": "^0.93.15",
-    "@types/uuid": "^3.4.4",
-    "babel-eslint": "^10.0.1",
-    "electron": "^2.0.8",
-    "electron-builder": "^19.56.2",
-    "electron-reload": "^1.0.2",
-    "eslint": "^4.19.1",
-    "eslint-plugin-html": "^4.0.3",
-    "eslint-plugin-import": "^2.12.0",
-    "eslint-plugin-typescript": "^0.14.0",
-    "eslint-plugin-vue": "^4.5.0",
-    "parcel-bundler": "^1.11.0",
-    "typescript": "^3.2.2",
-    "typescript-eslint-parser": "^21.0.2"
-  }
+	"name": "terrarium",
+	"version": "1.0.0",
+	"description": "A JavaScript clone of Minecraft with some improvements (I think).",
+	"main": "dist/main.js",
+	"scripts": {
+		"lint": "eslint --fix src/**",
+		"test": "",
+		"bundle": "parcel build src/index.html --target=electron --out-dir dist --public-url ./",
+		"prestart": "tsc && npm run bundle",
+		"start": "electron .",
+		"prebuild": "npm run bundle",
+		"build": "electron-builder"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ianpaschal/terrarium.git"
+	},
+	"author": "Ian Paschal",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/ianpaschal/terrarium/issues"
+	},
+	"homepage": "https://github.com/ianpaschal/terrarium#readme",
+	"dependencies": {
+		"aurora": "^2.1.3",
+		"noisejs": "^2.1.0",
+		"noisejs-ilmiont": "^1.2.2",
+		"perlin": "^1.0.0",
+		"simplex-noise": "^2.4.0",
+		"three": "^0.94.0",
+		"three-orbit-controls": "^82.1.0",
+		"uuid": "^3.2.1"
+	},
+	"devDependencies": {
+		"@types/node": "^10.12.18",
+		"@types/noisejs": "0.0.28",
+		"@types/three": "^0.93.15",
+		"@types/uuid": "^3.4.4",
+		"babel-eslint": "^10.0.1",
+		"electron": "^2.0.8",
+		"electron-builder": "^19.56.2",
+		"electron-reload": "^1.0.2",
+		"eslint": "^4.19.1",
+		"eslint-plugin-html": "^4.0.3",
+		"eslint-plugin-import": "^2.12.0",
+		"eslint-plugin-typescript": "^0.14.0",
+		"eslint-plugin-vue": "^4.5.0",
+		"parcel-bundler": "^1.11.0",
+		"typescript": "^3.2.2",
+		"typescript-eslint-parser": "^21.0.2"
+	}
 }
