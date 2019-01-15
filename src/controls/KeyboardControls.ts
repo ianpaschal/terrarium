@@ -1,7 +1,8 @@
 // Terrarium is distributed under the MIT license.
 
 class KeyboardControls {
-
+	handlers: {};
+	pressed: {};
 	constructor() {
 		this.handlers = {};
 		this.pressed = {};

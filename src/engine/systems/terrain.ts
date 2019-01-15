@@ -216,7 +216,7 @@ export default new System({
 					const elevation = Math.round( this.generator.noise2D(
 						( position.x + x ) / this.scale,
 						( position.y + y ) / this.scale
-					) * 4 ) + 4;
+					) * ( CHUNK_SIZE / 2 ) ) + ( CHUNK_SIZE / 2 );
 					const column = [ 1 ];
 					for ( let z = 1; z < elevation; z++ ) {
 						column.push( 1 );
@@ -282,7 +282,7 @@ export default new System({
 
 		// Create the generator
 		this.generator = new SimplexNoise();
-		this.scale = 32;
+		this.scale = 64;
 
 		// Store chunks here
 		this.chunks = [];

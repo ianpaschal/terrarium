@@ -14,7 +14,6 @@ export default new System({
 		// Do nothing for now
 	},
 	onUpdate( t ) {
-		console.log( "updated movement" );
 
 		// Use s instead of ms
 		t = t / 1000;
@@ -36,8 +35,6 @@ export default new System({
 			const velocity = mapToVector( "velocity" );
 			const position = mapToVector( "position" );
 
-			console.log( "input at movement.ts", player.getComponentData( "player-input" ) );
-
 			// Apply dampening acceleration change over time to velocity
 			velocity.add( velocity.clone().multiplyScalar( aFriction * t ) );
 
@@ -46,8 +43,6 @@ export default new System({
 
 			// Apply velocity change over time to position
 			position.add( velocity.clone().multiplyScalar( t ) );
-
-			// console.log( velocity, position );
 
 			player.setComponentData( "velocity", {
 				x: velocity.x,

@@ -3,9 +3,7 @@
 import { Object3D, Raycaster, Vector2, Vector3, PerspectiveCamera } from "three";
 import PointerLockControls from "./PointerLockControls";
 import KeyboardControls from "./KeyboardControls";
-import VoxelCursor from "./VoxelCursor";
 import scene from "../scene";
-import { ipcRenderer } from "electron";
 
 /**
  * @classdesc The Player Controller class uses a KeyboardInput Controller, a MouseInputController,
@@ -25,6 +23,8 @@ export default class PlayerController {
 	pitchObject     : Object3D;
 	raycaster       : Raycaster;
 	terrain         : Object3D;
+	targetPosition  : Vector3;
+	targetDirection : Vector3;
 
 	constructor( camera ) {
 
@@ -38,13 +38,11 @@ export default class PlayerController {
 
 		this.pitchObject = new Object3D();
 		this.pitchObject.add( camera );
-		// this.model.position.z = 10;
 		this.model.add( this.pitchObject );
 
 		this.raycaster = new Raycaster( new Vector3(), new Vector3(), 0, 8 );
-		// this.cursor = new VoxelCursor();
-		// scene.add( this.cursor );
-		// this.terrain = scene.getObjectByName( "terrain" );
+		this.cursor = scene.getObjectByName( "cursor" );
+		this.terrain = scene.getObjectByName( "terrain" );
 
 		this.input = {
 			forward: false,
@@ -54,6 +52,9 @@ export default class PlayerController {
 			up: false,
 			down: false
 		};
+
+		this.targetDirection = new Vector3();
+		this.targetPosition = new Vector3();
 
 		this.addKeyboardHandlers();
 		this.addMouseHandlers();
@@ -69,15 +70,17 @@ export default class PlayerController {
 				this.enabled = true;
 				const blocker = document.getElementById( "blocker" );
 				blocker.style.display = "none";
+				//@ts-ignore
 				document.body.requestPointerLock();
 			} else {
 				this.mouseControls.enabled = false;
 				this.enabled = false;
 				const blocker = document.getElementById( "blocker" );
 				blocker.style.display = "";
+				//@ts-ignore
 				document.exitPointerLock();
 			}
-		}, ()=>{});
+		}, () => {});
 
 		// Space
 		this.keyboardControls.addHandler( 32, () => {
@@ -127,7 +130,7 @@ export default class PlayerController {
 		this.mouseControls.addHandler( "move", ( pitch, yaw ) => {
 			this.model.rotation.z = yaw;
 			this.pitchObject.rotation.x = pitch;
-			// this.updateCursor();
+			this.updateCursor();
 		});
 		this.mouseControls.addHandler( 0, () => {
 			if ( this.cursor.visible ) {
@@ -155,13 +158,28 @@ export default class PlayerController {
 		const intersects = this.raycaster.intersectObject( this.terrain, true );
 
 		if ( intersects[ 0 ] ) {
-			// if ( !this.cursor.visible ) {
-			// 	this.cursor.visible = true;
-			// }
-			this.cursor.position.copy( intersects[ 0 ].face.voxelPosition );
-			this.cursor.direction.copy( intersects[ 0 ].face.normal );
+
+			if ( !this.cursor.visible ) {
+				this.cursor.visible = true;
+			}
+
+			const position = intersects[ 0 ].point;
+			const direction = intersects[ 0 ].face.normal;
+
+			this.targetDirection.copy( direction );
+
+			[ "x", "y", "z" ].forEach( ( axis ) => {
+				position[ axis ] = Math.floor( position[ axis ] );
+				this.targetPosition[ axis ] =  position[ axis ];
+				if ( direction[ axis ] > 0 ) {
+					this.targetPosition[ axis ] -= 1;
+				}
+			});
+
+			this.cursor.position.copy( this.targetPosition );
+			
 		} else {
-			// this.cursor.visible = false;
+			this.cursor.visible = false;
 		}
 	}
 

@@ -1,17 +1,16 @@
 // Terrarium is distributed under the MIT license.
 
-import { Fog, PerspectiveCamera,
+import { PerspectiveCamera,
 	Float32BufferAttribute, MeshLambertMaterial, Mesh,
 	WebGLRenderer, BufferGeometry, Vector3 } from "three";
 import PlayerController from "./controls/PlayerController";
 import scene from "./scene";
 import { ipcRenderer } from "electron";
-import DaylightSystem from "./world/DaylightSystem";
+import terrain from "./scene/terrain";
 
 let camera;
 let renderer;
 let player;
-let daylightSystem;
 
 function init() {
 	camera = new PerspectiveCamera(
@@ -20,10 +19,6 @@ function init() {
 
 	player = new PlayerController( camera );
 	player.spawn();
-
-	scene.fog = new Fog( 0xffffff, 0, 512 );
-	daylightSystem = new DaylightSystem();
-	scene.add( daylightSystem );
 
 	renderer = new WebGLRenderer({
 		antialias: false // for performance gain
@@ -88,7 +83,7 @@ ipcRenderer.on( "STATE", ( e, state ) => {
 				);
 				const mesh = new Mesh( geometry, material );
 				mesh.position.copy( position );
-				scene.add( mesh );
+				terrain.add( mesh );
 				break;
 			case "player":
 				positionComponent = entity.components.find( ( component ) => {
