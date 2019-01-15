@@ -6,7 +6,7 @@
 	"scripts": {
 		"lint": "eslint --fix src/**",
 		"test": "",
-		"bundle": "parcel build src/index.html --target=electron --out-dir dist --public-url ./",
+		"bundle": "parcel build index.html --target=electron --out-dir dist --public-url ./",
 		"prestart": "tsc && npm run bundle",
 		"start": "electron .",
 		"prebuild": "npm run bundle",
