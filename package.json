@@ -45,7 +45,7 @@
 		"eslint-plugin-html": "^4.0.3",
 		"eslint-plugin-import": "^2.12.0",
 		"eslint-plugin-typescript": "^0.14.0",
-		"eslint-plugin-vue": "^4.5.0",
+		"eslint-plugin-vue": "^4.7.1",
 		"parcel-bundler": "^1.12.3",
 		"typescript": "^3.2.2",
 		"typescript-eslint-parser": "^21.0.2"
