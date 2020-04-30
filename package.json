@@ -30,7 +30,7 @@
 		"simplex-noise": "^2.4.0",
 		"three": "^0.94.0",
 		"three-orbit-controls": "^82.1.0",
-		"uuid": "^3.2.1"
+		"uuid": "^8.0.0"
 	},
 	"devDependencies": {
 		"@types/node": "^10.12.18",
