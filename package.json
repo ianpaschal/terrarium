@@ -47,7 +47,7 @@
 		"eslint-plugin-typescript": "^0.14.0",
 		"eslint-plugin-vue": "^4.5.0",
 		"parcel-bundler": "^1.12.3",
-		"typescript": "^3.2.2",
+		"typescript": "^3.9.2",
 		"typescript-eslint-parser": "^21.0.2"
 	}
 }
