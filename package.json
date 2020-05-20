@@ -36,7 +36,7 @@
 		"@types/node": "^10.12.18",
 		"@types/noisejs": "0.0.28",
 		"@types/three": "^0.93.15",
-		"@types/uuid": "^3.4.4",
+		"@types/uuid": "^8.0.0",
 		"babel-eslint": "^10.0.1",
 		"electron": "^2.0.8",
 		"electron-builder": "^20.43.0",
