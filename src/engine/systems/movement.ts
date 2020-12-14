@@ -10,6 +10,11 @@ export default new System({
 		"velocity",
 		"player-input"
 	],
+	methods: {
+		getPlayerUUID() {
+			return this._entityUUIDs[ 0 ];
+		}
+	},
 	onInit() {
 		// Do nothing for now
 	},
@@ -55,7 +60,6 @@ export default new System({
 				z: position.z
 			});
 			player.dirty = true;
-			
 		});
 	}
 });

@@ -68,8 +68,7 @@ ipcMain.on( "TICK", ( e, data ) => {
 	// Perform all engine updates
 	engine.tick();
 
-	// This state is ONLY entities which were updated with ONLY their updated components
-	// (whole components)
+	// This state is ONLY entities which were updated
 	const state = new State( engine );
 	if ( state.entities.length > 0 ) {
 		e.sender.send( "STATE", state.flattened );
@@ -91,15 +90,3 @@ ipcMain.on( "SET_VOXEL_VALUE", ( e, position, value ) => {
 	 * will be pushed to the renderer thread when the next state is ready to be sent over.
 	 */
 });
-
-/*
-
-Some commands:
-
-"UPDATE_CHUNKS", [{x,y,z,indices,positions,normals,uvs}]
--> in rendering, search chunks object for sub object with that position, replace its goemetry
-
-"UNLOAD_CHUNKS", [{x,y,z}]
-
-"LOAD_CHUNKS", [{x,y,z,indices,positions,normals,uvs}]
-*/

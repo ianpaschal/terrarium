@@ -1,7 +1,7 @@
 // Terrarium is distributed under the MIT license.
 
 import { PerspectiveCamera,
-	Float32BufferAttribute, MeshLambertMaterial, Mesh,
+	Float32BufferAttribute, MeshNormalMaterial, Mesh,
 	WebGLRenderer, BufferGeometry, Vector3 } from "three";
 import PlayerController from "./controls/PlayerController";
 import scene from "./scene";
@@ -51,14 +51,20 @@ init();
 loop();
 
 ipcRenderer.on( "STATE", ( e, state ) => {
-	const material = new MeshLambertMaterial({
-		color: 0xAAAAAA
-	});
+	const material = new MeshNormalMaterial();
 	let positionComponent;
 	let position;
 	state.entities.forEach( ( entity ) => {
+		
 		switch( entity.type ) {
 			case "terrain-chunk":
+				console.log( "terrain", entity );
+				if ( entity.destroy ) {
+					const meshy = terrain.getObjectByName( entity.uuid );
+					console.log( meshy );
+					// terrain.remove( );
+					break;
+				}
 				const geometry = new BufferGeometry();
 				const geometryComponent = entity.components.find( ( component ) => {
 					return component.type === "buffer-geometry";
@@ -83,6 +89,7 @@ ipcRenderer.on( "STATE", ( e, state ) => {
 				);
 				const mesh = new Mesh( geometry, material );
 				mesh.position.copy( position );
+				mesh.name = entity.uuid;
 				terrain.add( mesh );
 				break;
 			case "player":

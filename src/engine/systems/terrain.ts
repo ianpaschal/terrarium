@@ -1,6 +1,6 @@
 // Terrarium is distributed under the MIT license.
 
-import { Vector3 } from "three";
+import { Vector3, Box3 } from "three";
 import { System, Entity } from "aurora";
 import SimplexNoise from "simplex-noise";
 
@@ -210,6 +210,10 @@ export default new System({
 			// chunk will be
 			let voxelData = [];
 
+			if ( position.z !== 0 ) {
+				return;
+			}
+
 			// Fill chunk in columns based on elevation
 			for ( let x = 0; x <= CHUNK_SIZE; x++ ) {
 				for ( let y = 0; y <= CHUNK_SIZE; y++ ) {
@@ -228,8 +232,7 @@ export default new System({
 				}
 			}
 
-			// Now create a chunk with the data:
-			this._engine.addEntity( new Entity({
+			const chunk = new Entity({
 				type: "terrain-chunk",
 				components: [
 					{
@@ -245,7 +248,14 @@ export default new System({
 						data: this.dispatch( "buildGeometry", voxelData )
 					}
 				]
-			}) );
+			});
+
+			this.chunks.push( chunk );
+
+			// Now create a chunk with the data:
+			this._engine.addEntity( chunk );
+
+			return chunk;
 		},
 		/**
 		 * Get the position of the voxel with the given index.
@@ -287,8 +297,10 @@ export default new System({
 		// Store chunks here
 		this.chunks = [];
 
+		this.players = [];
+
 		// Generate the beginning of the world
-		const worldSize = 8;
+		const worldSize = 2;
 		for ( let chunkX = worldSize / -2; chunkX < worldSize / 2; chunkX++ ) {
 			for ( let chunkY = worldSize / -2; chunkY < worldSize / 2; chunkY++ ) {
 				this.dispatch( "createChunk", {
@@ -300,6 +312,94 @@ export default new System({
 		}
 	},
 	onUpdate() {
-		// Generate some new terrain based on the player's positions
+		if ( !this.players[ 0 ] ) {
+			const uuid = this._engine.getSystem( "movement" ).dispatch( "getPlayerUUID" );
+			this.players[ 0 ] = this._engine.getEntity( uuid );
+		}
+		
+		if ( this.players[ 0 ].dirty ) {
+			const playerData = this.players[ 0 ].getComponentData( "position" );
+			const playerChunk = new Vector3(
+				Math.floor( playerData.x / 16 ) * 16,
+				Math.floor( playerData.y / 16 ) * 16,
+				Math.floor( playerData.z / 16 ) * 16
+			);
+			const min = new Vector3(
+				playerChunk.x - CHUNK_SIZE * 2,
+				playerChunk.y - CHUNK_SIZE * 2,
+				playerChunk.z - CHUNK_SIZE * 2
+			);
+			const max = new Vector3(
+				playerChunk.x + CHUNK_SIZE * 2,
+				playerChunk.y + CHUNK_SIZE * 2,
+				playerChunk.z + CHUNK_SIZE * 2
+			);
+
+			// Create a list of required positions
+			const positions = [];
+			for ( let x = min.x; x <= max.x; x += CHUNK_SIZE ) {
+				for ( let y = min.y; y <= max.y; y += CHUNK_SIZE ) {
+					for ( let z = min.z; z <= max.z; z += CHUNK_SIZE ) {
+						positions.push( new Vector3( x, y, z ) );
+					}
+				}
+			}
+			// console.log( "positions pre trim:", positions.length );
+
+			// create an array of required chunk positions
+			// cycle through chunks. for each one if its position is in required, keep it
+			// if it's not, destroy it
+			// take the remaining positions array and generate new chunks for those
+			this.chunks.forEach( ( chunk ) => {
+				const positionData = chunk.getComponentData( "position" );
+				const chunkPosition = new Vector3(
+					positionData.x,
+					positionData.y,
+					positionData.z
+				);
+				const match = positions.find( ( position ) => {
+					return position.equals( chunkPosition );
+				});
+				if ( !match ) {
+					this._engine.getEntity( chunk.uuid ).destroy = true;
+					console.log( this._engine.getEntity( chunk.uuid ) );
+					const i = this.chunks.indexOf( chunk );
+					this.chunks.splice( i, 1 );
+				} else {
+					const i = positions.indexOf( match );
+					positions.splice( i, 1 );
+				}
+			});
+
+			// console.log( "positions post trim:", positions.length );
+
+			// For any remaining required positions, create a chunk
+			positions.forEach( ( position ) => {
+				this.dispatch( "createChunk", {
+					x: position.x,
+					y: position.y,
+					z: position.z
+				});
+			});
+
+			// // get current chunk
+			// const currentChunk = this.chunks.find( ( chunk ) => {
+			// 	const chunkPosition = new Vector3();
+			// 	const positionData = chunk.getComponentData( "position" );
+			// 	chunkPosition.set(
+			// 		positionData.x,
+			// 		positionData.y,
+			// 		positionData.z
+			// 	);
+			// 	return chunkPosition.equals( playerChunk );
+			// });
+			// if ( !currentChunk ) {
+			// 	this.dispatch( "createChunk", {
+			// 		x: playerChunk.x,
+			// 		y: playerChunk.y,
+			// 		z: playerChunk.z
+			// 	});
+			// }
+		}
 	}
 });
