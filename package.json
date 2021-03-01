@@ -28,7 +28,7 @@
 		"noisejs-ilmiont": "^1.2.2",
 		"perlin": "^1.0.0",
 		"simplex-noise": "^2.4.0",
-		"three": "^0.94.0",
+		"three": "^0.125.0",
 		"three-orbit-controls": "^82.1.0",
 		"uuid": "^3.2.1"
 	},
